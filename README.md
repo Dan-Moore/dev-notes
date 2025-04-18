@@ -1,4 +1,4 @@
-Hello
+# Hello World!
 
 This is website is built with Next.js and MDX for content generation.
 
@@ -19,7 +19,6 @@ npm run dev
 
 If you see the following error, try running 'npm install --force'
 
-npm install
 ```bash
 npm error code ERESOLVE
 npm error ERESOLVE could not resolve
@@ -55,6 +54,4 @@ npm error to accept an incorrect (and potentially broken) dependency resolution.
 npm error
 npm error
 npm error For a full report see:
-npm error /home/who/.npm/_logs/2025-04-18T18_07_55_073Z-eresolve-report.txt
-npm error A complete log of this run can be found in: /home/who/.npm/_logs/2025-04-18T18_07_55_073Z-debug-0.log
 ```
