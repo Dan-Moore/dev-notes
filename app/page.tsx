@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { BookMarked, Calendar, Github, Inbox, Linkedin, Newspaper, Rss, Search, Settings, Sprout } from "lucide-react"
+import { Github, Linkedin, Rss} from "lucide-react"
 import Link from "next/link";
 
 
@@ -68,7 +68,7 @@ export default function Home() {
         </Link>
 
         <Link href={process.env.RSS_FEED} 
-          title="RSS FEED"
+          title="RSS Feed"
           className="flex items-center gap-2 hover:underline hover:underline-offset-4">
           <Rss />
         </Link>
