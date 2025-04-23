@@ -7,27 +7,27 @@ import { AppSearch } from "./app-search"
 const items = [
   {
     title: "Home",
-    url: "#",
+    url: "/",
     icon: Home,
   },
   {
     title: "Blog",
-    url: "#",
+    url: "/blog",
     icon: Newspaper,
   },
   {
     title: "KT Corner",
-    url: "#",
+    url: "/kt-corner",
     icon: BookMarked,
   },
   {
     title: "Projects",
-    url: "#",
+    url: "/project",
     icon: Sprout,
   },
   {
     title: "Calendar",
-    url: "#",
+    url: "/calendar",
     icon: Calendar,
   },
 ]

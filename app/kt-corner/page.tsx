@@ -2,8 +2,29 @@ import Image from "next/image";
 import { Github, Linkedin, Rss} from "lucide-react"
 import Link from "next/link";
 
+// Menu items.
+const items = [
+    {
+      title: "Spring Batch",
+      url: "#",
+    },
+    {
+      title: "Blog",
+      url: "#",
+    },
+    {
+      title: "KT Corner",
+      url: "#",
+    },
+    {
+      title: "Calendar",
+      url: "#",
+    },
+  ]
+  
 
-export default function Home() {
+
+export default function ProjectPage() {
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -17,25 +38,6 @@ export default function Home() {
           </li>
         </ol>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <Link href={process.env.PROFILE_LINKEDIN} 
-          title="LinkedIn Profile"
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4">
-          <Linkedin />
-        </Link>
-
-        <Link href={process.env.PROFILE_GITHUB} 
-          title="Github Account"
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4">
-          <Github />
-        </Link>
-
-        <Link href={process.env.RSS_FEED} 
-          title="RSS Feed"
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4">
-          <Rss />
-        </Link>
-      </footer>
     </div>
   );
 }

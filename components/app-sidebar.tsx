@@ -82,10 +82,7 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem key={footer.title}>
                   <SidebarMenuButton asChild>
-                    <a href={footer.url}>
-                      <footer.icon />
-                      <span>{footer.title}</span>
-                    </a>
+                  <p><kbd>Ctrl</kbd> + <kbd>B</kbd></p>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
           </SidebarMenu>
