@@ -5,7 +5,7 @@ import Link from "next/link";
 // Menu items.
 const items = [
     {
-      title: "Home",
+      title: "Spring Batch",
       url: "#",
     },
     {
