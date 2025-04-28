@@ -1,32 +1,36 @@
-
-This is website is built with Next.js and MDX for content generation.
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-Cloning the repo
+First, run the development server:
 
 ```bash
-git clone https://github.com/Dan-Moore/dev-notes.git
-```
-
-Open the directory /dev-notes and run npm install and run command.
-
-```bash
-npm install
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-If you see the following error, try running 'npm install --legacy-peer-deps' to bypass it. 
-This error is for a dependency conflict in [package.json](package.json). 
-You'll need to review the failing dependency and try updating with the latest hosted packages on [NPM](https://www.npmjs.com/).
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-```bash
-npm error code ERESOLVE
-npm error ERESOLVE could not resolve
-npm error
-... [Failing dependencies will be listed out here.]
-npm error Fix the upstream dependency conflict, or retry
-npm error this command with --force or --legacy-peer-deps
-npm error to accept an incorrect (and potentially broken) dependency resolution.
-``` 
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

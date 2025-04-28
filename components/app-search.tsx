@@ -3,8 +3,7 @@
 import * as React from "react"
 import type { KeyboardEvent } from "react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { Keyboard, Search } from "lucide-react"
+import { Search } from "lucide-react"
 import { Input } from "./ui/input"
 import Link from "next/link"
 

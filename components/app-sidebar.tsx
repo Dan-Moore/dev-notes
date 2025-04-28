@@ -1,5 +1,6 @@
-import { BookMarked, Calendar, Home, Inbox, Newspaper, Search, Settings } from "lucide-react"
+'use client'
 
+import { BookMarked, Calendar, Home, Inbox, Newspaper, Search, Settings } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -11,15 +12,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import path from "path";
 
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu"
+
+  import { usePathname } from 'next/navigation'
+import { fetchMDX } from "@/lib/io"
 
 // Menu items.
 const items = [
@@ -51,9 +48,24 @@ const footer =   {
     icon: Calendar,
   }
 
+  export async function generateStaticParams() {
+    const pathname = usePathname()
+    console.log(pathname)
+   
+    const filePath = path.join(process.env.KT_CORNER_DIR + "/" + pathname , 0 + ".mdx");
+   // const mdx = fetchMDX(filePath);
   
+    return { props: { mdx: 'filePath' } }
+  }
 
-export function AppSidebar() {
+
+
+export function AppSidebar({ params }) {
+  
+  // todo: parse dir to build side bar links.  See if I can build them from # tags in mdx or hard-coded in mdx headers
+
+  console.log("Here")
+  console.log(params)
 
   return (
     
