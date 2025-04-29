@@ -21,7 +21,7 @@ export async function generateStaticParams() {
   return params;
 }
 
-export default async function CalendarEventPage(props: { params: Promise<{ slug: string }> }) {
+export default async function Page(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
   const event = await fetchEvent(params);
   console.log(event)
@@ -31,7 +31,7 @@ export default async function CalendarEventPage(props: { params: Promise<{ slug:
 }
 
 // todo atm, scripts are shared between calendar and event page.
-
+/*
 export async function fetchEvent({ slug }: { slug: string }) {
   // file = parse("public/markdown/calendar", "pycon-2025", )
   const file = parse(process.env.DIR_CALENDAR, slug + ".mdx")
@@ -60,3 +60,4 @@ function appendEventDate(file: { pwd: string; name: string; path: string; meta: 
   
   return file;
 }
+*/
