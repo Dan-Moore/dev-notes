@@ -53,36 +53,73 @@ export function parse(dir: string, name: string) {
     return { dir: '', name: '', path: '', meta: {}, content: '' };
 }
 
-export function getPosts() {
-    let files = walk(process.env.DIR_MD_POSTS)
-/*
-    let rules = {
-        'tags': ['hi', 'nextjs'],
-        'dates': [{
-            'date': new Date(),
-            'op': FilterDateRule.AFTER
-        }]
-    };
-
-    let bar = filterFiles(files, rules)
-    console.log(bar)
-    */
-   return files;
+export function slug(file_name: any) {
+    return file_name.slice(0, file_name.lastIndexOf('.')) || file_name
 }
 
 
+export function details(file: {
+    dir: string;
+    name: string;
+    path: string;
+    meta: {
+        [key: string]: any;
+    };
+    content: string;
+}) {
+    if (!file || file == undefined || file == null ||
+        !file.meta || file.meta == undefined || file.meta == null || file.meta.length == 0) {
+        return undefined
+    }
+
+    let meta_dates = (file.meta["date"].constructor !== Array) ? 
+    [new Date(file.meta["date"].toString()) ] 
+    : 
+    file.meta["date"].map( (date: string) => new Date(date) )
+    
+    return {
+        dates: meta_dates,
+        title: file.meta?.["title"],
+        description: file.meta?.["description"],
+        tags: file.meta?.["tags"],
+        author: (file.meta?.["author"] ? file.meta?.["author"] : process.env.AUTHOR )
+    }
+}
 
 
+export function posts() {
+    let files = walk(process.env.DIR_MD_POSTS)
+    /*
+        let rules = {
+            'tags': ['hi', 'nextjs'],
+            'dates': [{
+                'date': new Date(),
+                'op': FilterDateRule.AFTER
+            }]
+        };
+    
+        let bar = filterFiles(files, rules)
+        console.log(bar)
+        */
+    return files;
+}
 
-function filterFiles(
-    files: { dir: string; name: string; path: string; meta: { [key: string]: any; }; content: string; }[], 
+
+/**
+ * Filter function - todo
+ * @param files 
+ * @param rules 
+ * @returns 
+ */
+function remove(
+    files: { dir: string; name: string; path: string; meta: { [key: string]: any; }; content: string; }[],
     rules: { tags: string[]; dates: { date: Date; op: string; }[]; }) {
     // Null check - returning as-is if rules are missing 
     if (!rules || rules == undefined || rules == null) {
-        return files;  
+        return files;
     } else if (
         (!rules.dates || rules.dates == undefined || rules.dates == null || rules.dates.length == 0)
-        && 
+        &&
         (!rules.tags || rules.tags == undefined || rules.tags == null || rules.tags.length == 0)) {
         return files;
     }
@@ -101,7 +138,7 @@ function filterFiles(
         return false;
     }
 
-    
+
     // running the filter ...
     return files.filter((file) => {
         // Checking Required Tags;
@@ -110,7 +147,7 @@ function filterFiles(
             const meta_tags: string[] = file.meta['tags']
             isValidTag = meta_tags.includes(tag_rule);
         })
-        
+
 
         // Checking Date Requirements
         // in meta, dates can be 'string' or 'string[]' 
@@ -130,7 +167,7 @@ function filterFiles(
                 })
             }
         })
-        console.log(`[isValidTag:${isValidTag}, isValidDate:${isValidDate}]`)
+        //console.log(`[isValidTag:${isValidTag}, isValidDate:${isValidDate}]`)
         return isValidTag && isValidDate;
     })
 }
