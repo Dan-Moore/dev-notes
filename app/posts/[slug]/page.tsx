@@ -3,6 +3,7 @@ import path from "path";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { YouTubeEmbed } from "@next/third-parties/google";
+import { components } from "@/components/mdx-components";
 
 
 // Content for these pages will be fetched with getPost function.
@@ -43,12 +44,6 @@ export default async function Page(props0: { params: Promise<{ slug: string }> }
   // Fetch the post content based on the slug
   const props = await getPost(params);
 
-  // Customize components for MDX rendering.
-  // For example, the Code component will render code blocks with syntax highlighting.
-  // The YouTube component will render YouTube videos.
-  const components = {
-    YouTubeEmbed
-  };
 
   return (
     <article className="prose prose-sm md:prose-base lg:prose-lg mx-auto">

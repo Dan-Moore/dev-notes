@@ -8,21 +8,29 @@ export interface MarkdownFile {
   readonly link: string 
   readonly content: string
   /**
-   * all front-matter headers.
+   * @remarks
+   * all front-matter headers. For common re-useable fields, add them to details.
    */
-  readonly meta: { [key: string]: any } | undefined
+  readonly meta: { [key: string]: any } | {}
   readonly details: {
-    dates: Date[] | undefined
+    dates: Date[] | []
     title: string
     desc: string
-    tags: string[] | undefined
+    tags: string[] | []
     author: string | undefined
     publish: Date | undefined
     /**
      * @returns returns true if 'draft' was found in headers or before publish date.
      */
-    draft: boolean | undefined
+    draft: boolean | true
   };
+  /**
+   * fetches H# headers from the markdown file.
+   * @remarks
+   * Sample:
+   * [{level:0, raw:'# Hello World', label:'Hello World', link: '#hello-world'}]
+   * @returns 
+   */
   headers: () => [
     {
       level: number
@@ -99,7 +107,6 @@ export function parse(p: string) {
     return dates;
   }
 
-  console.log(path.basename(p))
   // building file object.
   return {
     dir: path.dirname(p),
@@ -200,7 +207,6 @@ export function events() {
           return file.dir == banner.dir && !file.name?.startsWith("banner.md");
         }),
       };
-      //console.log(event)
       return event;
     }),
   ];

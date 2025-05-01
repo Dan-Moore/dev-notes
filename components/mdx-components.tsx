@@ -8,5 +8,5 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
 }
 
 export const components = {
-  YouTubeEmbed
+  YouTubeEmbed,
 };
