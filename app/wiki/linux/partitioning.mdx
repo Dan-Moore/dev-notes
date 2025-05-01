@@ -1,0 +1,95 @@
+# Linux Partition 
+
+
+
+## [Parted](https://wiki.archlinux.org/title/Parted)
+
+Hello world
+
+- https://www.gnu.org/software/parted/manual/parted.html
+- https://www.redhat.com/en/blog/partitions-parted
+- https://www.youtube.com/watch?v=IHdDVecuY9I&t=60s
+
+### Cheat Sheet
+```bash
+# list drive infomation
+parted -s /dev/sdb print all
+```
+
+### Creating a Partition table
+Run parted with the command `mklabel gpt` to make a [GUID Partition Table](https://wiki.archlinux.org/title/GUID_Partition_Table) or `mklabel msdos` for a [Master Boot Record](https://wiki.archlinux.org/title/Master_Boot_Record)
+
+```bash
+# SSDs (alpha & delta)
+parted -s /dev/sda mklabel gpt
+parted -s /dev/ssd mklabel gpt
+
+# HDDs (beta & cappa)
+parted -s /dev/sdb mklabel gpt
+parted -s /dev/sbc mklabel gpt
+```
+    
+Creating the partition.
+
+```bash
+parted -s /dev/sda mkpart primary ext4 0% 100%
+parted -s /dev/sdb mkpart primary ext4 1 2500
+```
+
+## Mounting
+make mount folder '/mnt/
+```
+sudo mount /dev/sda1 /mnt/cappa
+```
+Use lsblk or df -h to check that the drive has been mounted and is accessible at the specified mount poin
+
+    - how to unmount
+To unmount the drive, use the umount command: sudo umount /mnt/my_drive. 
+
+
+    sudo chown -R $USER:$USER /path/to/mount/point
+
+
+    lsblk -f
+
+    ```
+    NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+sda                                                                                
+└─sda1      ext4   1.0   alpha 1e5d8ac7-21c8-4036-ad65-f2bc74ebbc95                
+sdb                                                                                
+└─sdb1      ext4   1.0   beta  681f6d18-7d9d-4dbc-af86-62f5eb60cccf                
+sdc                                                                                
+└─sdc1      ext4   1.0   cappa 96c147fc-4a65-4246-a596-f177f51757d6    6.9T     0% /run/media/who/cappa
+sdd                                                                                
+└─sdd1      ext4   1.0   delta ebe460fd-133a-4d2d-981c-c3909783d729                
+nvme0n1                                                                            
+└─nvme0n1p1 ext4   1.0         f0380a1e-163b-4f03-a13d-fa71c823da9a    1.7T     1% /nix/store
+                                                                                   /
+
+
+    ```
+
+    ```
+    nano /etc/fstab
+    ```
+
+sudo chown -R $USER:$USER /mnt/cappa
+    # This is a generated file.  Do not edit!
+#
+# To make changes, edit the fileSystems and swapDevices NixOS options
+# in your /etc/nixos/configuration.nix file.
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+
+# Filesystems.
+/dev/disk/by-uuid/f0380a1e-163b-4f03-a13d-fa71c823da9a / ext4 x-initrd.mount 0 1
+
+
+# Swap devices.
+UUID=1e5d8ac7-21c8-4036-ad65-f2bc74ebbc95 /mnt/alpha ext4 defaults 0 0
+UUID=681f6d18-7d9d-4dbc-af86-62f5eb60cccf /mnt/beta ext4 defaults 0 0
+UUID=96c147fc-4a65-4246-a596-f177f51757d6 /mnt/cappa ext4 defaults 0 0
+UUID=ebe460fd-133a-4d2d-981c-c3909783d729 /mnt/delta ext4 defaults 0 0
+
+
+## [CryptSetup]()

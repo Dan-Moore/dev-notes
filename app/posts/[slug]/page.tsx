@@ -12,7 +12,7 @@ import { YouTubeEmbed } from "@next/third-parties/google";
 //For example, { props: { slug: "my-first-post", content: "..." } }
 async function getPost({ slug }: { slug: string }) {  
     const markdownFile = fs.readFileSync(
-    path.join(process.env.DIR_MD_POSTS , slug + ".mdx"),
+    path.join(process.env.BLOG_POSTS , slug + ".mdx"),
     "utf-8"
   );
   const { data: frontMatter, content } = matter(markdownFile);
@@ -28,7 +28,7 @@ async function getPost({ slug }: { slug: string }) {
 // It returns an array of possible values for slug.
 // For example, [{ params: { slug: "my-first-post" } }, { params: { slug: "my-second-post" } }]
 export async function generateStaticParams() {
-  const files = fs.readdirSync(process.env.DIR_MD_POSTS);
+  const files = fs.readdirSync(process.env.BLOG_POSTS);
   const params = files.map((filename) => ({
     slug: filename.replace(".mdx", ""),
   }));

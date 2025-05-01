@@ -13,7 +13,7 @@ import { notFound } from "next/navigation";
 export async function generateStaticParams() {
   // os walk through /public/markdown/calendar 
   // todo - add support for nested dirs; maybe add archive support
-  const files = walk(process.env.DIR_CALENDAR)
+  const files = walk(process.env.CALENDAR_EVENTS)
   const params = files.map((file) => ({
     slug: file.name,
   }));

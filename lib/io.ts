@@ -2,172 +2,209 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 
-export const FilterDateRule = { ON: 'on', BEFORE: 'pre', AFTER: 'post' }
+export interface MarkdownFile {
+  readonly dir: string
+  readonly name: string 
+  readonly link: string 
+  readonly content: string
+  /**
+   * all front-matter headers.
+   */
+  readonly meta: { [key: string]: any } | undefined
+  readonly details: {
+    dates: Date[] | undefined
+    title: string
+    desc: string
+    tags: string[] | undefined
+    author: string | undefined
+    publish: Date | undefined
+    /**
+     * @returns returns true if 'draft' was found in headers or before publish date.
+     */
+    draft: boolean | undefined
+  };
+  headers: () => [
+    {
+      level: number
+      raw: string
+      label: string
+      link: string
+    }
+  ];
+}
 
-
-/**
- * Reads directory with fs.readdirSync() & io.parse()
- * @remarks
- * {
- *  name: file name
- *  dir: path to file
- *  meta: front matter headers
- *  content: file content
- * }
- * 
- * @param dir_path 
- * @returns 
- */
-export function walk(dir_path: string) {
-    const fs_files = fs.readdirSync(dir_path);
-    const files = fs_files.map((fs_file) => {
-        return parse(dir_path, fs_file)
-    })
-    return files;
+export interface CalendarEvent {
+  readonly title: string;
+  readonly dates: Date[];
+  readonly banner: MarkdownFile;
+  readonly files: MarkdownFile[];
 }
 
 /**
- * Parses the file with gray-matter
- * @example 
+ * Parses the file path with gray-matter.
+ * @example
  * ```ts
- * const fs_content = fs.readFileSync("" + _path);
+ * const fs_content = fs.readFileSync("" + p);
  * const { data: frontMatter, content } = matter(fs_content);
  * ```
- * @param dir - directory path to the file
- * @param name - name of the file
- * @returns 
+ * @param p path variable - public/markdown/hi.mdx
+ * @returns
  */
-export function parse(dir: string, name: string) {
-    const _path = path.join(dir, name) // _path = ("public/markdown/calendar", "hi.mdx")
-    if (fs.existsSync(_path)) {
-        const fs_content = fs.readFileSync("" + _path);
-        const { data: front_matter, content } = matter(fs_content);
-        return {
-            dir: dir,
-            name: name,
-            path: _path,
-            meta: front_matter,
-            content: content
-        };
+export function parse(p: string) {
+  // console.log(`running parse(${p})`);
+  const isReal = fs.existsSync(p);
+  if (isReal && fs.statSync(p).isDirectory()) {
+    throw new Error(`unable to parse(${p}).  Given path was a directory!`);
+  } else if (!isReal || !fs.statSync(p).isFile()) {
+    throw new Error(
+      `unable to parse(${p}).  Unknown object failed either fs.existsSync(${p}) or fs.statSync(${p}).isFile().`
+    );
+  }
+
+  // parsing with gray-matter
+  const fs_buffer = fs.readFileSync("" + p);
+  const { data: meta, content } = matter(fs_buffer);
+  const name = path.basename(p);
+
+  // pulling out any fields called date or dates
+  // both fields will be combine into one set.
+  // too messy atm to added as a one liner in the return.
+  function getDates(meta: { [key: string]: any }): Date[] {
+    // todo - clean up
+    let dates: Date[] = [];
+    if (!meta["date"] && !meta["dates"]) {
+      return dates;
     }
-    return { dir: '', name: '', path: '', meta: {}, content: '' };
-}
-
-export function slug(file_name: any) {
-    return file_name.slice(0, file_name.lastIndexOf('.')) || file_name
-}
-
-
-export function details(file: {
-    dir: string;
-    name: string;
-    path: string;
-    meta: {
-        [key: string]: any;
-    };
-    content: string;
-}) {
-    if (!file || file == undefined || file == null ||
-        !file.meta || file.meta == undefined || file.meta == null || file.meta.length == 0) {
-        return undefined
+    if (meta["date"]) {
+      if (meta["date"].constructor !== Array) {
+        dates.push(new Date(meta["date"].toString()));
+      } else {
+        dates = [
+          ...dates,
+          ...meta["date"].map((date: string) => new Date(date)),
+        ];
+      }
     }
+    if (meta["dates"]) {
+        if (meta["dates"].constructor !== Array) {
+          dates.push(new Date(meta["dates"].toString()));
+        } else {
+          dates = [
+            ...dates,
+            ...meta["dates"].map((date: string) => new Date(date)),
+          ];
+        }
+      }
 
-    let meta_dates = (file.meta["date"].constructor !== Array) ? 
-    [new Date(file.meta["date"].toString()) ] 
-    : 
-    file.meta["date"].map( (date: string) => new Date(date) )
-    
-    return {
-        dates: meta_dates,
-        title: file.meta?.["title"],
-        description: file.meta?.["description"],
-        tags: file.meta?.["tags"],
-        author: (file.meta?.["author"] ? file.meta?.["author"] : process.env.AUTHOR )
-    }
+    return dates;
+  }
+
+  console.log(path.basename(p))
+  // building file object.
+  return {
+    dir: path.dirname(p),
+    name: path.basename(p),
+    meta: meta,
+    content: content,
+    link: p.replace(process.env.MD_DIR, '').replace('.mdx', ''),
+    details: {
+      dates: getDates(meta),
+      title: meta["title"],
+      desc: meta["desc"] ? meta["desc"] : meta["description"],
+      tags: meta["tags"],
+      author: meta["author"] ? meta["author"] : process.env.AUTHOR,
+      publish: meta["publish"] ? new Date(meta["publish"]) : undefined,
+      draft: meta["draft"]
+        ? meta["draft"]
+        : meta["publish"]
+        ? new Date() < new Date(meta["publish"])
+        : true,
+    },
+    headers: () => {
+      // todo - pull out markdown headers
+      return [
+        {
+          level: 0,
+          raw: "string",
+          label: "string",
+          link: "string",
+        },
+      ];
+    },
+  };
 }
-
-
-export function posts() {
-    let files = walk(process.env.DIR_MD_POSTS)
-    /*
-        let rules = {
-            'tags': ['hi', 'nextjs'],
-            'dates': [{
-                'date': new Date(),
-                'op': FilterDateRule.AFTER
-            }]
-        };
-    
-        let bar = filterFiles(files, rules)
-        console.log(bar)
-        */
-    return files;
-}
-
 
 /**
- * Filter function - todo
- * @param files 
- * @param rules 
- * @returns 
+ * Reads directory with fs.readdirSync() & io.parse().
+ * @remarks
+ * Doesn't walk through nested folders in a directory,
+ * but only grabs the files at the given root directory.
+ *
+ * @param dir - directory
+ * @returns
  */
-function remove(
-    files: { dir: string; name: string; path: string; meta: { [key: string]: any; }; content: string; }[],
-    rules: { tags: string[]; dates: { date: Date; op: string; }[]; }) {
-    // Null check - returning as-is if rules are missing 
-    if (!rules || rules == undefined || rules == null) {
-        return files;
-    } else if (
-        (!rules.dates || rules.dates == undefined || rules.dates == null || rules.dates.length == 0)
-        &&
-        (!rules.tags || rules.tags == undefined || rules.tags == null || rules.tags.length == 0)) {
-        return files;
+export function read_dir(dir: string) {
+  let files: MarkdownFile[] = [];
+  fs.readdirSync(dir).map((fs_file) => {
+    files.push(parse(path.join(dir, fs_file)));
+  });
+  return files;
+}
+
+/**
+ * Recursive directory walk.
+ * @param dir - /public/markdown/calendar
+ * @param files - collection of parsed markdown files
+ * @returns
+ */
+export function walk(dir: string, files: MarkdownFile[] = []) {
+  if (!dir || dir == undefined || dir == null || !fs.existsSync(dir)) {
+    throw new Error(`unable to walk(${dir}, ${files})!  Invalid directory!`);
+  }
+
+  if (fs.statSync(dir).isDirectory()) {
+    for (const p of fs.readdirSync(dir).map((name) => path.join(dir, name))) {
+      walk(p, files);
     }
+  } else if (fs.statSync(dir).isFile()) {
+    files.push(parse(dir));
+  }
 
-    // helper functions
-    const date_validator = function (rule: string, rule_date: Date, meta_date: Date) {
-        console.log(meta_date.toDateString() + ` [${rule}] ` + rule_date.toDateString())
+  return files;
+}
 
-        if (rule == FilterDateRule.ON) {
-            return rule_date == meta_date
-        } else if (rule == FilterDateRule.BEFORE) {
-            return rule_date < meta_date
-        } else if (rule == FilterDateRule.AFTER) {
-            return rule_date > meta_date
-        }
-        return false;
-    }
+export function posts() {
+  // reading only root files in the blog directory.
+  return read_dir(process.env.BLOG_POSTS);
+}
 
+export function events() {
+  const files = walk(process.env.CALENDAR_EVENTS);
 
-    // running the filter ...
-    return files.filter((file) => {
-        // Checking Required Tags;
-        let isValidTag = false;
-        rules.tags.forEach((tag_rule) => {
-            const meta_tags: string[] = file.meta['tags']
-            isValidTag = meta_tags.includes(tag_rule);
-        })
+  // fetching all banner files.
+  const banners = files.filter((file) => {
+    //console.log(`checking name: ${file.name} - ${file.name?.startsWith("banner.md")}`)
+    return file.name?.startsWith("banner.md");
+  });
 
+  const events: CalendarEvent[] = [
+    ...banners.map((banner) => {
+      const event: CalendarEvent = {
+        title: banner.details.title,
+        dates: banner.details.dates ? banner.details.dates : [new Date()],
+        banner: banner,
+        //grabbing all files in the same banner directory.
+        files: files.filter((file) => {
+            //console.log(`checking ${file.dir} == ${banner.dir} on ${file.name}`)
+           // console.log(file.dir == banner.dir && !file.name?.startsWith("banner.md"))
+          return file.dir == banner.dir && !file.name?.startsWith("banner.md");
+        }),
+      };
+      //console.log(event)
+      return event;
+    }),
+  ];
 
-        // Checking Date Requirements
-        // in meta, dates can be 'string' or 'string[]' 
-        let isValidDate = false;
-        rules.dates.forEach((date_rule) => {
-            const meta_date = file.meta['date']
-            if (meta_date.constructor === String) {
-                isValidDate = date_validator(date_rule.op, date_rule.date, new Date(meta_date.toString()))
-                return isValidDate
-            } else if (meta_date.constructor === Array) {
-                // checking date range
-                meta_date.forEach((date) => {
-                    if (!isValidDate) {
-                        isValidDate = date_validator(date_rule.op, date_rule.date, new Date(meta_date.toString()))
-                        return isValidDate;
-                    }
-                })
-            }
-        })
-        //console.log(`[isValidTag:${isValidTag}, isValidDate:${isValidDate}]`)
-        return isValidTag && isValidDate;
-    })
+  //console.log(`events: \n${JSON.stringify(banners)}`);
+  return events;
 }

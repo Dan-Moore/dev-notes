@@ -10,19 +10,19 @@ const items = [
     icon: Home,
   },
   {
-    title: "Posts",
-    url: "/posts",
-    icon: Newspaper,
-  },
-  {
-    title: "KT Corner",
-    url: "/kt-corner",
+    title: "Wiki",
+    url: "/wiki",
     icon: BookMarked,
   },
   {
     title: "Projects",
     url: "/projects",
     icon: Sprout,
+  },
+  {
+    title: "Posts",
+    url: "/posts",
+    icon: Newspaper,
   },
   {
     title: "Calendar",
