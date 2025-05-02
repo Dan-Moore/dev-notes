@@ -9,7 +9,7 @@ export interface MarkdownFile {
   readonly content: string
   /**
    * @remarks
-   * all front-matter headers. For common re-useable fields, add them to details.
+   * all front-matter headers. For common re-useable fields, see details.
    */
   readonly meta: { [key: string]: any } | {}
   readonly details: {
@@ -31,14 +31,12 @@ export interface MarkdownFile {
    * [{level:0, raw:'# Hello World', label:'Hello World', link: '#hello-world'}]
    * @returns 
    */
-  headers: () => [
-    {
-      level: number
-      raw: string
-      label: string
-      link: string
-    }
-  ];
+    headers: {
+    level: number;
+    raw: string;
+    label: string;
+    link: string;
+}[] | []
 }
 
 export interface CalendarEvent {
@@ -72,13 +70,44 @@ export function parse(p: string) {
   // parsing with gray-matter
   const fs_buffer = fs.readFileSync("" + p);
   const { data: meta, content } = matter(fs_buffer);
-  const name = path.basename(p);
+
+  // building file object.
+  const file: MarkdownFile = {
+    dir: path.dirname(p),
+    name: path.basename(p),
+    meta: meta,
+    content: content,
+    link: p.replace(process.env.MD_DIR, '').replace('.mdx', ''),
+    details: {
+      dates: _dates(meta),
+      title: meta["title"],
+      desc: meta["desc"] ? meta["desc"] : meta["description"],
+      tags: meta["tags"],
+      author: meta["author"] ? meta["author"] : process.env.AUTHOR,
+      publish: meta["publish"] ? new Date(meta["publish"]) : undefined,
+      draft: meta["draft"]
+        ? meta["draft"]
+        : meta["publish"]
+        ? new Date() < new Date(meta["publish"])
+        : true,
+    },
+    headers: _headers(content),
+  };
+
+  function _headers(content: string) {
+    return [
+      {
+        level: 0,
+        raw: "string",
+        label: "string",
+        link: "string",
+      },
+    ];
+  } 
 
   // pulling out any fields called date or dates
   // both fields will be combine into one set.
-  // too messy atm to added as a one liner in the return.
-  function getDates(meta: { [key: string]: any }): Date[] {
-    // todo - clean up
+  function _dates(meta: { [key: string]: any }): Date[] {
     let dates: Date[] = [];
     if (!meta["date"] && !meta["dates"]) {
       return dates;
@@ -106,39 +135,6 @@ export function parse(p: string) {
 
     return dates;
   }
-
-  // building file object.
-  return {
-    dir: path.dirname(p),
-    name: path.basename(p),
-    meta: meta,
-    content: content,
-    link: p.replace(process.env.MD_DIR, '').replace('.mdx', ''),
-    details: {
-      dates: getDates(meta),
-      title: meta["title"],
-      desc: meta["desc"] ? meta["desc"] : meta["description"],
-      tags: meta["tags"],
-      author: meta["author"] ? meta["author"] : process.env.AUTHOR,
-      publish: meta["publish"] ? new Date(meta["publish"]) : undefined,
-      draft: meta["draft"]
-        ? meta["draft"]
-        : meta["publish"]
-        ? new Date() < new Date(meta["publish"])
-        : true,
-    },
-    headers: () => {
-      // todo - pull out markdown headers
-      return [
-        {
-          level: 0,
-          raw: "string",
-          label: "string",
-          link: "string",
-        },
-      ];
-    },
-  };
 }
 
 /**
@@ -160,9 +156,9 @@ export function read_dir(dir: string) {
 
 /**
  * Recursive directory walk.
- * @param dir - /public/markdown/calendar
+ * @param dir - directory path
  * @param files - collection of parsed markdown files
- * @returns
+ * @returns 
  */
 export function walk(dir: string, files: MarkdownFile[] = []) {
   if (!dir || dir == undefined || dir == null || !fs.existsSync(dir)) {
