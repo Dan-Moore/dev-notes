@@ -72,7 +72,6 @@ export function parse(p: string) {
   // parsing with gray-matter
   const fs_buffer = fs.readFileSync("" + p);
   const { data: meta, content } = matter(fs_buffer);
-  const name = path.basename(p);
 
   // pulling out any fields called date or dates
   // both fields will be combine into one set.
@@ -161,7 +160,7 @@ export function read_dir(dir: string) {
 /**
  * Recursive directory walk.
  * @param dir - /public/markdown/calendar
- * @param files - collection of parsed markdown files
+ * @param files - optional []. List of found files in the dir
  * @returns
  */
 export function walk(dir: string, files: MarkdownFile[] = []) {

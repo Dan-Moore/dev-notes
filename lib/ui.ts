@@ -5,7 +5,6 @@ export const themes = [
     { id: "dark", name: "Dark" },
 ];
 
-// Fonts 
 export const inter = Inter({
     subsets: ["latin"],
     display: "swap",
@@ -80,6 +79,4 @@ export const openSans = Open_Sans({
       className: lora.className,
       variable: "--font-lora",
     },
-  ]
-// End of Fonts
-  
+  ]  
