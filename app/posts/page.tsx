@@ -1,12 +1,15 @@
+
+
 import { posts } from "@/lib/io";
 import Link from "next/link";
-
+import Tri from "./foo";
 
 export default function Page() {
+
   return (
     <main className="max-w-4xl mx-auto py-10 px-4">
       <h1 className="text-3xl font-bold mb-8">Dev Notes</h1>
-
+      <Tri />
       <div className="grid gap-6">
         {posts().map((post) => (
           <article key={post.link} className="border rounded-lg p-6 hover:shadow-md transition">

@@ -1,46 +1,49 @@
-// todo clean up ai slop
-
 import { Inter, Geist, Geist_Mono, Roboto, Open_Sans, Montserrat, Lora } from "next/font/google"
 
-// Load the fonts
-const inter = Inter({
+export const themes = [
+    { id: "light", name: "Light" },
+    { id: "dark", name: "Dark" },
+];
+
+// Fonts 
+export const inter = Inter({
     subsets: ["latin"],
     display: "swap",
     variable: "--font-inter",
   })
   
-  const geist = Geist({
+export const geist = Geist({
     subsets: ["latin"],
     display: "swap",
     variable: "--font-geist",
   })
   
-  const roboto = Roboto({
+ export const roboto = Roboto({
     weight: ["400", "500", "700"],
     subsets: ["latin"],
     display: "swap",
     variable: "--font-roboto",
   })
   
-  const openSans = Open_Sans({
+export const openSans = Open_Sans({
     subsets: ["latin"],
     display: "swap",
     variable: "--font-open-sans",
   })
   
-  const montserrat = Montserrat({
+  export const montserrat = Montserrat({
     subsets: ["latin"],
     display: "swap",
     variable: "--font-montserrat",
   })
   
-  const lora = Lora({
+  export const lora = Lora({
     subsets: ["latin"],
     display: "swap",
     variable: "--font-lora",
   })
 
-  export const siteFonts = [
+  export const fonts = [
     {
       id: "inter",
       name: "Inter",
@@ -78,6 +81,5 @@ const inter = Inter({
       variable: "--font-lora",
     },
   ]
+// End of Fonts
   
-  
-  export { inter, geist, roboto, openSans, montserrat, lora }

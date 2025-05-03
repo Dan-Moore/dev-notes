@@ -34,6 +34,7 @@ const items = [
 export function AppHeader() {
   return (
     <header className="z-10 sticky top-0 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              {/** Left side of the screen */}
       <div className="container flex h-16 max-w-screen-2xl items-center">
         <nav className="flex items-center space-x-4 lg:space-x-6 px-8">
           {items.map((item, index) => (
@@ -45,14 +46,17 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
+        {/** Right side of the screen */}
         <div className="flex flex-1 items-center justify-end space-x-2">
           <nav className="flex items-center px-8">
+            {/** Right side of the screen
           <Link
               href='#'
               title='Settings'
               className="mr-8 flex items-center space-x-2">
               <AppSettings />
             </Link>
+             */}
           </nav></div>
       </div>
 

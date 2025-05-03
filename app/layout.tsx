@@ -1,14 +1,12 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono} from "next/font/google"
+'use client'
 
+import type { Metadata } from "next";
 import "./globals.css";
 import { AppHeader } from "@/components/app-header";
 import { ThemeProvider } from "@/components/theme-provider";
-
-export const metadata: Metadata = {
-  title: "Dev Notes",
-  description: "todo",
-};
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import React from "react";
 
 
 export default function RootLayout({
@@ -16,6 +14,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -28,8 +27,14 @@ export default function RootLayout({
             disableTransitionOnChange
           >
         <div className="relative flex w-full flex-col bg-background">
-          <AppHeader />
-          <main className="flex-1">{children}</main>
+          {/*<AppHeader />*/}
+          <SidebarProvider>
+            <AppSidebar  />
+            <main className="flex-1">
+              
+              <AppHeader />{children}
+            </main>
+          </SidebarProvider>
         </div>
         </ThemeProvider>
       </body>

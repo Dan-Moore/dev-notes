@@ -11,7 +11,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
-import { siteFonts } from "@/lib/fonts"
+import { siteFonts } from "@/lib/ui"
 import { Settings } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Separator } from "@/components/ui/separator"
