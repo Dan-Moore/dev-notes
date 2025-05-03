@@ -25,8 +25,8 @@ const items = [
     icon: Newspaper,
   },
   {
-    title: "Calendar",
-    url: "/calendar",
+    title: "Events",
+    url: "/events",
     icon: Calendar,
   },
 ]

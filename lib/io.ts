@@ -181,11 +181,11 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
 
 export function posts() {
   // reading only root files in the blog directory.
-  return read_dir(process.env.BLOG_POSTS);
+  return read_dir(`${process.env.MD_DIR}/posts`);
 }
 
 export function events() {
-  const files = walk(process.env.CALENDAR_EVENTS);
+  const files = walk(`${process.env.MD_DIR}/events`);
 
   // fetching all banner files.
   const banners = files.filter((file) => {
