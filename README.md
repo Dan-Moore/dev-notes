@@ -53,7 +53,7 @@ Sample use case `walk(/public/markdown/events)`
  * @returns
  */
 export function walk(dir: string, files: MarkdownFile[] = []) {
-  if (!dir || dir == undefined || dir == null || !fs.existsSync(dir)) {
+  if (!dir || dir == null || !fs.existsSync(dir)) {
     throw new Error(`unable to walk(${dir}, ${files})!  Invalid directory!`);
   }
 
