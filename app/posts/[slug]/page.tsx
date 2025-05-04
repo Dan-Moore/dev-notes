@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { YouTubeEmbed } from "@next/third-parties/google";
 import { components } from "@/components/mdx";
 import { dirs } from "@/lib/consts";
 import { SiteFooter } from "@/components/site-footer";
