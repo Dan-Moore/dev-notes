@@ -44,7 +44,7 @@ See [io.ts](/lib/io.ts) for current implementation.
 A recursive directory walk is used within the walk command. 
 Produces a collection [MarkdownFile](#markdownfile-schema) objects for any file found during the walk. 
 
-Sample use case `walk(/public/markdown/events`)`
+Sample use case `walk(/public/markdown/events)`
 ```tsx
 /**
  * Recursive directory walk.
@@ -138,7 +138,7 @@ export default async function PagePage({ params }: PageProps) {
 #### Event Schema
 | Field | Type | Description | Sample |
 | --- | --- | --- | --- | 
-| title | string | Name of the event | Pycon 2025
+| title | string | Name of the event | PyCon 2025
 | dates | Date[] | Date range of the event | 
 | about | MarkdownFile | information file about the event | about.mdx
 | files | MarkdownFile[] | files found in the event directory | [ai-crash-course.mdx]
