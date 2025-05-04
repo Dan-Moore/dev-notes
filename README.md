@@ -25,7 +25,7 @@ MDX files can be used as imports, if they reside within the [app directory](http
 import DevNotes from './dev-notes.mdx'
 
 export default function Page() {
-  return (<><DevNotes/></>)
+  return (<><DevNotes /></>)
 }
 ```
 
