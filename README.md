@@ -1,5 +1,5 @@
 # Hello World!
-This website was build with [Next.js](https://nextjs.org/docs) and [shadcn](https://ui.shadcn.com/).
+This website was built with [Next.js](https://nextjs.org/docs) and [shadcn](https://ui.shadcn.com/).
 
 ## NPM Cheat Sheet
 - `npm install` - Downloads and install npm packages. 
