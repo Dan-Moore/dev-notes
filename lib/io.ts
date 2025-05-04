@@ -180,6 +180,7 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
   return files;
 }
 
+
 export function posts() {
   // reading only root files in the blog directory.
   return read_dir(`${process.env.MD_DIR}/posts`);
