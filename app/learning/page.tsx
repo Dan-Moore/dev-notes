@@ -1,3 +1,14 @@
+import { AppSidebar } from "@/components/app-sidebar"
+import { DataTable, DataTableDemo } from "./data-table"
+import { SectionCards } from "@/components/section-cards"
+import { SiteHeader } from "@/components/site-header"
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
+
+import data from "./data.json"
+import { resources } from "@/lib/io"
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
@@ -12,7 +23,7 @@ import { SiteFooter } from "@/components/site-footer";
 // It returns the content of the post with the matching slug.
 // It also returns the slug itself, which Next.js will use to determine which page to render at build time.
 //For example, { props: { slug: "my-first-post", content: "..." } }
-async function getPost({ slug }: { slug: string }) {  
+async function getLearningResource({ slug }: { slug: string }) {  
     const markdownFile = fs.readFileSync(
     path.join(dirs.posts, slug + ".mdx"),
     "utf-8"
@@ -38,20 +49,29 @@ export async function generateStaticParams() {
   return params;
 }
 
-export default async function Page(props0: { params: Promise<{ slug: string }> }) {
-  const params = await props0.params;
-  // Params contains the post `slug`
-
-  // Fetch the post content based on the slug
-  const props = await getPost(params);
-
-
+export default function Page(props0: { params: Promise<{ slug: string }> }) {
+  const data = JSON.stringify(resources())
+  //console.log(dirs)
   return (
-    <main className="max-w-4xl mx-auto py-10 px-4">
-    <div className="grid gap-6">
-      <MDXRemote source={props.content} components={components} />
-    </div>
-    <SiteFooter />
-    </main>
-  );
+    <SidebarProvider defaultOpen={false} 
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties
+      }
+    >
+      <AppSidebar variant="inset"/>
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col">
+          <div className="@container/main flex flex-1 flex-col gap-2">
+            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+              <DataTableDemo />
+            </div>
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  )
 }

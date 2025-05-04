@@ -9,7 +9,7 @@ export interface MarkdownFile {
   readonly content: string
   /**
    * @remarks
-   * all front-matter headers. For common re-useable fields, see details.
+   * all front-matter headers. For common re-useable fields, add them to details.
    */
   readonly meta: { [key: string]: any } | {}
   readonly details: {
@@ -31,20 +31,23 @@ export interface MarkdownFile {
    * [{level:0, raw:'# Hello World', label:'Hello World', link: '#hello-world'}]
    * @returns 
    */
-    headers: {
-    level: number;
-    raw: string;
-    label: string;
-    link: string;
-}[] | []
+  headers: () => [
+    {
+      level: number
+      raw: string
+      label: string
+      link: string
+    }
+  ];
 }
 
-export interface CalendarEvent {
+export interface MarkdownDirectory {
   readonly title: string;
   readonly dates: Date[];
   readonly banner: MarkdownFile;
   readonly files: MarkdownFile[];
 }
+
 
 /**
  * Parses the file path with gray-matter.
@@ -71,43 +74,11 @@ export function parse(p: string) {
   const fs_buffer = fs.readFileSync("" + p);
   const { data: meta, content } = matter(fs_buffer);
 
-  // building file object.
-  const file: MarkdownFile = {
-    dir: path.dirname(p),
-    name: path.basename(p),
-    meta: meta,
-    content: content,
-    link: p.replace(process.env.MD_DIR, '').replace('.mdx', ''),
-    details: {
-      dates: _dates(meta),
-      title: meta["title"],
-      desc: meta["desc"] ? meta["desc"] : meta["description"],
-      tags: meta["tags"],
-      author: meta["author"] ? meta["author"] : process.env.AUTHOR,
-      publish: meta["publish"] ? new Date(meta["publish"]) : undefined,
-      draft: meta["draft"]
-        ? meta["draft"]
-        : meta["publish"]
-        ? new Date() < new Date(meta["publish"])
-        : true,
-    },
-    headers: _headers(content),
-  };
-
-  function _headers(content: string) {
-    return [
-      {
-        level: 0,
-        raw: "string",
-        label: "string",
-        link: "string",
-      },
-    ];
-  } 
-
   // pulling out any fields called date or dates
   // both fields will be combine into one set.
-  function _dates(meta: { [key: string]: any }): Date[] {
+  // too messy atm to added as a one liner in the return.
+  function getDates(meta: { [key: string]: any }): Date[] {
+    // todo - clean up
     let dates: Date[] = [];
     if (!meta["date"] && !meta["dates"]) {
       return dates;
@@ -135,6 +106,39 @@ export function parse(p: string) {
 
     return dates;
   }
+
+  // building file object.
+  return {
+    dir: path.dirname(p),
+    name: path.basename(p),
+    meta: meta,
+    content: content,
+    link: p.replace(process.env.MD_DIR, '').replace('.mdx', ''),
+    details: {
+      dates: getDates(meta),
+      title: meta["title"],
+      desc: meta["desc"] ? meta["desc"] : meta["description"],
+      tags: meta["tags"],
+      author: meta["author"] ? meta["author"] : process.env.AUTHOR,
+      publish: meta["publish"] ? new Date(meta["publish"]) : undefined,
+      draft: meta["draft"]
+        ? meta["draft"]
+        : meta["publish"]
+        ? new Date() < new Date(meta["publish"])
+        : true,
+    },
+    headers: () => {
+      // todo - pull out markdown headers
+      return [
+        {
+          level: 0,
+          raw: "string",
+          label: "string",
+          link: "string",
+        },
+      ];
+    },
+  };
 }
 
 /**
@@ -156,15 +160,15 @@ export function read_dir(dir: string) {
 
 /**
  * Recursive directory walk.
- * @param dir - directory path
- * @param files - collection of parsed markdown files
- * @returns 
+ * @param dir - /public/markdown/calendar
+ * @param files - optional []. List of found files in the dir
+ * @returns
  */
 export function walk(dir: string, files: MarkdownFile[] = []) {
   if (!dir || dir == undefined || dir == null || !fs.existsSync(dir)) {
     throw new Error(`unable to walk(${dir}, ${files})!  Invalid directory!`);
   }
-
+  //console.log(`running walk(${dir})`)
   if (fs.statSync(dir).isDirectory()) {
     for (const p of fs.readdirSync(dir).map((name) => path.join(dir, name))) {
       walk(p, files);
@@ -178,28 +182,30 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
 
 export function posts() {
   // reading only root files in the blog directory.
-  return read_dir(process.env.BLOG_POSTS);
+  return read_dir(`${process.env.MD_DIR}/posts`);
 }
 
-export function events() {
-  const files = walk(process.env.CALENDAR_EVENTS);
+export function resources() {
+  const files = walk(`${process.env.MD_DIR}/learning`);
 
   // fetching all banner files.
   const banners = files.filter((file) => {
     //console.log(`checking name: ${file.name} - ${file.name?.startsWith("banner.md")}`)
     return file.name?.startsWith("banner.md");
   });
+  //console.log(`banners: \n${JSON.stringify(banners)}`);
 
-  const events: CalendarEvent[] = [
+  // building 
+  const dirs: MarkdownDirectory[] = [
     ...banners.map((banner) => {
-      const event: CalendarEvent = {
+      const event: MarkdownDirectory = {
         title: banner.details.title,
         dates: banner.details.dates ? banner.details.dates : [new Date()],
         banner: banner,
         //grabbing all files in the same banner directory.
         files: files.filter((file) => {
             //console.log(`checking ${file.dir} == ${banner.dir} on ${file.name}`)
-           // console.log(file.dir == banner.dir && !file.name?.startsWith("banner.md"))
+            //console.log(file.dir == banner.dir && !file.name?.startsWith("banner.md"))
           return file.dir == banner.dir && !file.name?.startsWith("banner.md");
         }),
       };
@@ -207,6 +213,6 @@ export function events() {
     }),
   ];
 
-  //console.log(`events: \n${JSON.stringify(banners)}`);
-  return events;
+  
+  return dirs;
 }
