@@ -44,7 +44,7 @@ See [io.ts](/lib/io.ts) for current implementation.
 A recursive directory walk is used within the walk command. 
 Produces a collection [MarkdownFile](#markdownfile-schema) objects for any file found during the walk. 
 
-Sample use case `walk(`${process.env.MD_DIR}/events`)`
+Sample use case `walk(/public/markdown/events`)`
 ```tsx
 /**
  * Recursive directory walk.
@@ -72,7 +72,11 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
 
 #### MDX Remote
 [MDX Remote](https://nextjs.org/docs/app/guides/mdx) is render in MDX files into the Nextjs client.
+
+
 ```tsx
+import DevNotes from './dev-notes.mdx'
+
 interface PageProps {
   params: {
     slug: string[]
@@ -97,19 +101,25 @@ export default async function PagePage({ params }: PageProps) {
   }
 
   return (
+    {/* Using MDX file as a component */}
+    <DevNotes />
+
     <article className="py-10 prose dark:prose-invert ">
+      {/* Using MDX file from a remote source. i.e. /public/markdown */}
       <MDXRemote source={markdown.content} components={components} />
     </article>
   )
 }
 ```
+
+
 #### MarkdownFile Schema
 | Field | Type | Description | Sample |
 | --- | --- | --- | --- | 
 | dir | string | Directory of the file | /public/markdown/events/pycon-2025
 | name | string | Name of the file | banner.mdx
 | link | string | Link to the file | /events/pycon-2025/banner.mdx
-| content | string | File content parsed with `gray-matter` | banner.mdx
+| content | string | File content parsed with `gray-matter` | 
 | meta | {[key: string]: any;} | Front-matter headers | [{title: 'Sample Post'}, {date: '2025-05-01'}]
 | details | {} | File information object | See Details schema
 | headers | () => [{},{}] | Markdown Headers | [{level: 1, raw: '# Hello World!', label: 'Hello World!', link: 'hello-world'}]
