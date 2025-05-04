@@ -71,8 +71,8 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
 
 
 #### MDX Remote
-[MDX Remote](https://nextjs.org/docs/app/guides/mdx) is render in MDX files into the Nextjs client.
-
+[MDX Remote](https://nextjs.org/docs/app/guides/mdx) is render in MDX files from `/public/markdown` into the Nextjs client.  
+Local mdx files stored within the app directory can be loaded as imports.
 
 ```tsx
 import DevNotes from './dev-notes.mdx'
