@@ -9,7 +9,7 @@ This website was built with [Next.js](https://nextjs.org/docs) and [shadcn](http
 ### Changing Localhost Port 
 The `-p` flag is used to indicate to port number during the run script. 
 Edit [package.json](/package.json) to change the port number.
-By default Node picks `3000`. If its already in use, then Node will start incrementing the port number till it finds the next available port.
+By default, Node picks `3000`. If its already in use, then Node will start incrementing the port number till it finds the next available port.
 ```json
   "scripts": {
     "dev": "next dev --turbopack -p 3333",
@@ -19,18 +19,26 @@ By default Node picks `3000`. If its already in use, then Node will start increm
   }
 ```
 ## Markdown
-Most pages will be written in markdown. A [root directory](/public/markdown/) houses folders used by [App Router](https://nextjs.org/docs/app/building-your-application/routing). 
+Most pages will be written in markdown as [MDX files](https://github.com/mdx-js/mdx). 
+MDX files can be used as imports, if they reside within the [app directory](https://nextjs.org/docs/app/building-your-application/routing)
+```tsx
+import DevNotes from './dev-notes.mdx'
+
+export default function Page() {
+  return (<><DevNotes/></>)
+}
+```
 
 
-Re-useable environment variables have been added to [.env](/.env) 
-Sample use case: `process.env.MD_DIR`
-
-To render a markdown page.  [MDXRemote](https://nextjs.org/docs/app/guides/mdx) is used to load in the page content.
-```typescript
+For files outside of the app directory, [MDXRemote](https://nextjs.org/docs/app/guides/mdx) is used to render the page. 
+```tsx
 <div className="flex-1 p-6">
-  <MDXRemote source={event.banner.content} components={components} />
+  <MDXRemote source={event.about.content} components={components} />
 </div>
 ```
+
+
+
 
 ### Parsing Markdown Docs
 See [io.ts](/lib/io.ts) for current implementation.  
@@ -68,50 +76,6 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
   return files;
 }
 ```
-
-
-#### MDX Remote
-[MDX Remote](https://nextjs.org/docs/app/guides/mdx) is render in MDX files from `/public/markdown` into the Nextjs client.  
-Local mdx files stored within the app directory can be loaded as imports.
-
-```tsx
-import DevNotes from './dev-notes.mdx'
-
-interface PageProps {
-  params: {
-    slug: string[]
-  }
-}
-
-async function getPageFromParams(params: PageProps["params"]) {
-  const slug = await params?.slug?.join("/")
-  let foundFile = undefined
-  for(const event of events()) {
-    foundFile = event.files.find(
-      (file) => (file.link.trim().match((`${process.env.EVENT_DIR}/${slug}`).trim())))
-  }
-  return foundFile;
-}
-
-
-export default async function PagePage({ params }: PageProps) {
-  const markdown = await getPageFromParams(params)
-  if (!markdown) {
-    notFound()
-  }
-
-  return (
-    {/* Using MDX file as a component */}
-    <DevNotes />
-
-    <article className="py-10 prose dark:prose-invert ">
-      {/* Using MDX file from a remote source. i.e. /public/markdown */}
-      <MDXRemote source={markdown.content} components={components} />
-    </article>
-  )
-}
-```
-
 
 #### MarkdownFile Schema
 | Field | Type | Description | Sample |
