@@ -41,12 +41,13 @@ export interface MarkdownFile {
   ];
 }
 
-export interface CalendarEvent {
+export interface MarkdownDirectory {
   readonly title: string;
   readonly dates: Date[];
   readonly banner: MarkdownFile;
   readonly files: MarkdownFile[];
 }
+
 
 /**
  * Parses the file path with gray-matter.
@@ -167,7 +168,7 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
   if (!dir || dir == undefined || dir == null || !fs.existsSync(dir)) {
     throw new Error(`unable to walk(${dir}, ${files})!  Invalid directory!`);
   }
-
+  //console.log(`running walk(${dir})`)
   if (fs.statSync(dir).isDirectory()) {
     for (const p of fs.readdirSync(dir).map((name) => path.join(dir, name))) {
       walk(p, files);
@@ -184,25 +185,27 @@ export function posts() {
   return read_dir(`${process.env.MD_DIR}/posts`);
 }
 
-export function events() {
-  const files = walk(`${process.env.MD_DIR}/events`);
+export function resources() {
+  const files = walk(`${process.env.MD_DIR}/learning`);
 
   // fetching all banner files.
   const banners = files.filter((file) => {
     //console.log(`checking name: ${file.name} - ${file.name?.startsWith("banner.md")}`)
     return file.name?.startsWith("banner.md");
   });
+  //console.log(`banners: \n${JSON.stringify(banners)}`);
 
-  const events: CalendarEvent[] = [
+  // building 
+  const dirs: MarkdownDirectory[] = [
     ...banners.map((banner) => {
-      const event: CalendarEvent = {
+      const event: MarkdownDirectory = {
         title: banner.details.title,
         dates: banner.details.dates ? banner.details.dates : [new Date()],
         banner: banner,
         //grabbing all files in the same banner directory.
         files: files.filter((file) => {
             //console.log(`checking ${file.dir} == ${banner.dir} on ${file.name}`)
-           // console.log(file.dir == banner.dir && !file.name?.startsWith("banner.md"))
+            //console.log(file.dir == banner.dir && !file.name?.startsWith("banner.md"))
           return file.dir == banner.dir && !file.name?.startsWith("banner.md");
         }),
       };
@@ -210,6 +213,6 @@ export function events() {
     }),
   ];
 
-  //console.log(`events: \n${JSON.stringify(banners)}`);
-  return events;
+  
+  return dirs;
 }
