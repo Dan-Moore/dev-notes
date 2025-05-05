@@ -7,16 +7,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Map-reduce on MarkdownDirectory[]
+ * Returns any stored MarkdownFiles found when traversing over MarkdownDirectory[].
  * @param dirs
- * @returns
+ * @remarks
+ * Map-reduce on MarkdownDirectory[]
+ * @returns MarkdownFile[]
  */
 export function fetchFiles(dirs: MarkdownDirectory[] | []) {
   return dirs
-    .map((dir: MarkdownDirectory) => {
-      return dir.files;
-    })
-    .reduce((x, y) => {
-      return [...x, ...y];
-    });
+    .map((dir: MarkdownDirectory) => dir.files)
+    .reduce((x, y) => [...x, ...y]);
 }
+
+
