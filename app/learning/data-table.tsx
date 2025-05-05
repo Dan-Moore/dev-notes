@@ -13,7 +13,7 @@ import { MarkdownDirectory } from "@/lib/io";
 import { fetchFiles } from "@/lib/utils";
 
 
-export function DataTable({ data }) {
+export function DataTable({data}) {
   const dirs: MarkdownDirectory[] = JSON.parse(data);
   const files = fetchFiles(dirs);
   //console.log(files)
