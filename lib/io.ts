@@ -75,35 +75,46 @@ export function parse(p: string) {
 
   // pulling out any fields called date or dates
   // both fields will be combine into one set.
-  // too messy atm to added as a one liner in the return.
   function getDates(meta: { [key: string]: any }): Date[] {
-    // todo - clean up
     let dates: Date[] = [];
     if (!meta["date"] && !meta["dates"]) {
       return dates;
-    }
-    if (meta["date"]) {
-      if (meta["date"].constructor !== Array) {
-        dates.push(new Date(meta["date"].toString()));
-      } else {
-        dates = [
-          ...dates,
-          ...meta["date"].map((date: string) => new Date(date)),
-        ];
-      }
-    }
-    if (meta["dates"]) {
-      if (meta["dates"].constructor !== Array) {
-        dates.push(new Date(meta["dates"].toString()));
-      } else {
-        dates = [
-          ...dates,
-          ...meta["dates"].map((date: string) => new Date(date)),
-        ];
-      }
-    }
+    } 
 
+    for(let value of [meta["date"], meta["dates"]]) {
+      if(typeof value == typeof Array) {
+        dates = [
+          ...dates,
+          ...value.map((date: string) => new Date(date)),
+        ];
+      } else {
+        dates.push(new Date(value));
+      }
+    }
     return dates;
+  }
+
+  function buildHeaders(content: string) {
+    const raw_headers = content.split("\n").filter((line) => {
+      return line.charAt(0) == "#";
+    });
+
+    // building headers
+    return raw_headers.map((raw) => {
+      let i; // why
+      for (
+        i = 0;
+        i < 6 && `${raw.slice(0, i)}#` == raw.slice(0, i + 1);
+        i++
+      ) {}
+
+      return {
+        level: i,
+        raw: raw,
+        label: raw.slice(i + 1),
+        link: raw.slice(i + 1).toLowerCase().replaceAll(' ','-'),
+      };
+    });
   }
 
   // building file object.
@@ -126,28 +137,7 @@ export function parse(p: string) {
         ? new Date() < new Date(meta["publish"])
         : true,
     },
-    headers: () => {
-      const raw_headers = content.split("\n").filter((line) => {
-        return line.charAt(0) == "#";
-      });
-
-      // building headers
-      return raw_headers.map((raw) => {
-        let i; // why
-        for (
-          i = 0;
-          i < 6 && `${raw.slice(0, i)}#` == raw.slice(0, i + 1);
-          i++
-        ) {}
-
-        return {
-          level: i,
-          raw: raw,
-          label: raw.slice(i + 1),
-          link: raw.slice(i + 1).toLowerCase().replaceAll(' ','-'),
-        };
-      });
-    },
+    headers: buildHeaders(content)
   };
 }
 
@@ -193,7 +183,7 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
 export function posts() {
   // reading only root files in the blog directory.
   let foo = read_dir(`${process.env.MD_DIR}/posts`);
-  console.log(foo[0].headers());
+  console.log(foo[0].headers);
   return foo;
 }
 
