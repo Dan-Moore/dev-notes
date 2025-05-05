@@ -18,5 +18,3 @@ export function fetchFiles(dirs: MarkdownDirectory[] | []) {
     .map((dir: MarkdownDirectory) => dir.files)
     .reduce((x, y) => [...x, ...y]);
 }
-
-

@@ -3,40 +3,40 @@ import path from "path";
 import matter from "gray-matter";
 
 export interface MarkdownFile {
-  readonly dir: string
-  readonly name: string 
-  readonly link: string 
-  readonly content: string
+  readonly dir: string;
+  readonly name: string;
+  readonly link: string;
+  readonly content: string;
   /**
    * @remarks
    * all front-matter headers. For common re-useable fields, add them to details.
    */
-  readonly meta: { [key: string]: any } | {}
+  readonly meta: { [key: string]: any } | {};
   readonly details: {
-    dates: Date[] | []
-    title: string
-    desc: string
-    tags: string[] | []
-    author: string | undefined
-    publish: Date | undefined
+    dates: Date[] | [];
+    title: string;
+    desc: string;
+    tags: string[] | [];
+    author: string | undefined;
+    publish: Date | undefined;
     /**
      * @returns returns true if 'draft' was found in headers or before publish date.
      */
-    draft: boolean | true
+    draft: boolean | true;
   };
   /**
    * fetches H# headers from the markdown file.
    * @remarks
    * Sample:
    * [{level:0, raw:'# Hello World', label:'Hello World', link: '#hello-world'}]
-   * @returns 
+   * @returns
    */
   headers: () => [
     {
-      level: number
-      raw: string
-      label: string
-      link: string
+      level: number;
+      raw: string;
+      label: string;
+      link: string;
     }
   ];
 }
@@ -47,7 +47,6 @@ export interface MarkdownDirectory {
   readonly banner: MarkdownFile;
   readonly files: MarkdownFile[];
 }
-
 
 /**
  * Parses the file path with gray-matter.
@@ -94,15 +93,15 @@ export function parse(p: string) {
       }
     }
     if (meta["dates"]) {
-        if (meta["dates"].constructor !== Array) {
-          dates.push(new Date(meta["dates"].toString()));
-        } else {
-          dates = [
-            ...dates,
-            ...meta["dates"].map((date: string) => new Date(date)),
-          ];
-        }
+      if (meta["dates"].constructor !== Array) {
+        dates.push(new Date(meta["dates"].toString()));
+      } else {
+        dates = [
+          ...dates,
+          ...meta["dates"].map((date: string) => new Date(date)),
+        ];
       }
+    }
 
     return dates;
   }
@@ -113,7 +112,7 @@ export function parse(p: string) {
     name: path.basename(p),
     meta: meta,
     content: content,
-    link: p.replace(process.env.MD_DIR, '').replace('.mdx', ''),
+    link: p.replace(process.env.MD_DIR, "").replace(".mdx", ""),
     details: {
       dates: getDates(meta),
       title: meta["title"],
@@ -128,15 +127,26 @@ export function parse(p: string) {
         : true,
     },
     headers: () => {
-      // todo - pull out markdown headers
-      return [
-        {
-          level: 0,
-          raw: "string",
-          label: "string",
-          link: "string",
-        },
-      ];
+      const raw_headers = content.split("\n").filter((line) => {
+        return line.charAt(0) == "#";
+      });
+
+      // building headers
+      return raw_headers.map((raw) => {
+        let i; // why
+        for (
+          i = 0;
+          i < 6 && `${raw.slice(0, i)}#` == raw.slice(0, i + 1);
+          i++
+        ) {}
+
+        return {
+          level: i,
+          raw: raw,
+          label: raw.slice(i + 1),
+          link: raw.slice(i + 1).toLowerCase().replaceAll(' ','-'),
+        };
+      });
     },
   };
 }
@@ -180,10 +190,11 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
   return files;
 }
 
-
 export function posts() {
   // reading only root files in the blog directory.
-  return read_dir(`${process.env.MD_DIR}/posts`);
+  let foo = read_dir(`${process.env.MD_DIR}/posts`);
+  console.log(foo[0].headers());
+  return foo;
 }
 
 export function resources() {
@@ -196,7 +207,7 @@ export function resources() {
   });
   //console.log(`banners: \n${JSON.stringify(banners)}`);
 
-  // building 
+  // building
   const dirs: MarkdownDirectory[] = [
     ...banners.map((banner) => {
       const event: MarkdownDirectory = {
@@ -205,15 +216,13 @@ export function resources() {
         banner: banner,
         //grabbing all files in the same banner directory.
         files: files.filter((file) => {
-            //console.log(`checking ${file.dir} == ${banner.dir} on ${file.name}`)
-            //console.log(file.dir == banner.dir && !file.name?.startsWith("banner.md"))
+          //console.log(`checking ${file.dir} == ${banner.dir} on ${file.name}`)
+          //console.log(file.dir == banner.dir && !file.name?.startsWith("banner.md"))
           return file.dir == banner.dir && !file.name?.startsWith("banner.md");
         }),
       };
       return event;
     }),
   ];
-
-  
   return dirs;
 }
