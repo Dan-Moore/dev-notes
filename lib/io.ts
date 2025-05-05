@@ -151,7 +151,7 @@ export function parse(p: string) {
  * @returns
  */
 export function read_dir(dir: string) {
-  let files: MarkdownFile[] = [];
+  const files: MarkdownFile[] = [];
   fs.readdirSync(dir).map((fs_file) => {
     files.push(parse(path.join(dir, fs_file)));
   });

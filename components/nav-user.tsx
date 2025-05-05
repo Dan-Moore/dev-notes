@@ -1,11 +1,7 @@
 "use client"
 
 import {
-  IconCreditCard,
   IconDotsVertical,
-  IconLogout,
-  IconNotification,
-  IconUserCircle,
 } from "@tabler/icons-react"
 
 import {
@@ -30,7 +26,6 @@ import {
 } from "@/components/ui/sidebar"
 import { Github, Linkedin, Rss } from "lucide-react"
 import { Tooltip, TooltipProvider } from "./ui/tooltip"
-import { Button } from "./ui/button"
 import Link from "next/link"
 
 export function NavUser({
