@@ -1,7 +1,7 @@
 import fs, { unlink } from "fs";
 import path from "path";
 import matter from "gray-matter";
-import { dirs } from "./consts";
+import { env } from "./consts";
 
 /**
  * Retrieves a collection of MarkdownFile for a given directory.
@@ -11,10 +11,10 @@ import { dirs } from "./consts";
  * @returns
  */
 export function retrieve(dir: string) {
-  // todo - on hosted GH page, I only want markdown files from db. 
+  // todo - on hosted GH page, I only want markdown files from db.
   const isProd = false;
-  if (isProd) { 
-    return read(dir); 
+  if (isProd) {
+    return read(dir);
   }
 
   const isMatch = function (x: MarkdownFile, y: MarkdownFile) {
@@ -35,12 +35,12 @@ export function retrieve(dir: string) {
   ];
 }
 
-export function posts() {
-  return retrieve(`${process.env.MD_DIR}/posts`);
+export function getPosts() {
+  return retrieve(env.dirs.posts);
 }
 
-export function learningResources() {
-  return retrieve(`${process.env.MD_DIR}/learning`);
+export function getLearning() {
+  return retrieve(env.dirs.learning);
 }
 
 export interface MarkdownFile {
@@ -121,7 +121,7 @@ function make(
  * @param p path variable - public/markdown/hi.mdx
  * @returns
  */
-export function parse(p: string) {
+function parse(p: string) {
   // console.log(`running parse(${p})`);
   const isReal = fs.existsSync(p);
   if (isReal && fs.statSync(p).isDirectory()) {
@@ -157,8 +157,8 @@ export function parse(p: string) {
  */
 export function local(dir: string) {
   const files: MarkdownFile[] = [];
-  fs.readdirSync(dir).map((fs_file) => {
-    files.push(parse(path.join(dir, fs_file)));
+  fs.readdirSync(dir).map((file) => {
+    files.push(parse(path.join(dir, file)));
   });
   return files;
 }
@@ -170,11 +170,12 @@ export function local(dir: string) {
  * @returns
  */
 export function walk(dir: string, files: MarkdownFile[] = []) {
-  if (!dir || dir == undefined || dir == null || !fs.existsSync(dir)) {
+  if (!dir || !fs.existsSync(dir)) {
     throw new Error(`unable to walk(${dir}, ${files})!  Invalid directory!`);
   }
   //console.log(`running walk(${dir})`)
   if (fs.statSync(dir).isDirectory()) {
+    // p - path variable to re-run the walk command on.
     for (const p of fs.readdirSync(dir).map((name) => path.join(dir, name))) {
       walk(p, files);
     }
@@ -194,8 +195,8 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
 export function fetch(
   dir: string,
   name: string,
-  table: string = (process.env.ARCHIVE_DB || 'md'),
-  location: string = (process.env.ARCHIVE_DB || '/public/db/archive.db')
+  table: string = env.archive.table,
+  location: string = env.archive.location
 ) {
   const Database = require("better-sqlite3");
   const db = new Database(location, { verbose: console.log });
@@ -218,11 +219,13 @@ export function fetch(
       name,
       content,
       meta,
-      true // Compress flag, content is raw text atm. 
+      true // Compress flag, content is raw text atm.
     );
   }
 
-  throw Error(`Missing ${dir}/${name} from archive and local markdown directory!`);
+  throw Error(
+    `Missing ${dir}/${name} from archive and local markdown directory!`
+  );
 }
 
 /**
@@ -232,8 +235,8 @@ export function fetch(
  */
 export function read(
   dir: string,
-  table: string = (process.env.ARCHIVE_DB || 'md'),
-  location: string = (process.env.ARCHIVE_DB || '/public/db/archive.db')
+  table: string = env.archive.table,
+  location: string = env.archive.location
 ) {
   const Database = require("better-sqlite3");
   const db = new Database(location, { verbose: console.log });
@@ -259,9 +262,14 @@ export function read(
  */
 export function archive(
   files: MarkdownFile[],
-  table: string = (process.env.ARCHIVE_DB || 'md'),
-  location: string = (process.env.ARCHIVE_DB || '/public/db/archive.db')
+  table: string = env.archive.table,
+  location: string = env.archive.location
 ) {
+  // todos:
+  //  - add backup feature?
+  //  - test - row count vs source files
+  //  - test - read file from new db.            
+
   // Deleting prior archive
   unlink(location, (err) => {
     if (err) throw err;
@@ -296,4 +304,11 @@ export function archive(
       };
     })
   );
+}
+
+export function restore(
+  table: string = env.archive.table,
+  location: string = env.archive.location
+) {
+  // todo - build md files from archive db.
 }
