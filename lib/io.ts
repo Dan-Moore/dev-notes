@@ -5,16 +5,16 @@ import { dirs } from "./consts";
 
 /**
  * Retrieves a collection of MarkdownFile for a given directory.
- * @remark 
- * While in production mode, only return files from archive.db 
+ * @remark
+ * While in production mode, only return files from archive.db
  * @param dir
  * @returns
  */
 export function retrieve(dir: string) {
+  // todo - on hosted GH page, I only want markdown files from db. 
   const isProd = false;
-  if (isProd) {
-    // only display pages
-    return read(dir); // from the archive.db
+  if (isProd) { 
+    return read(dir); 
   }
 
   const isMatch = function (x: MarkdownFile, y: MarkdownFile) {
@@ -36,11 +36,11 @@ export function retrieve(dir: string) {
 }
 
 export function posts() {
-  return retrieve(`${process.env.MD_DIR}/posts`)
+  return retrieve(`${process.env.MD_DIR}/posts`);
 }
 
 export function learningResources() {
-  return retrieve(`${process.env.MD_DIR}/learning`)
+  return retrieve(`${process.env.MD_DIR}/learning`);
 }
 
 export interface MarkdownFile {
@@ -67,7 +67,15 @@ export interface MarkdownFile {
 }
 
 /**
- * Helper function to make MarkdownFile objects
+ * Helper function to build MarkdownFile objects.
+ * @remarks
+ * When working with local markdown files, use the compress flag.
+ * ```
+ * content: compress
+      ? require("zlib").deflateSync(content).toString("base64")
+      : content,
+ * ```
+ * @param compress - Flag to compress file with zlib. 
  */
 function make(
   dir: string,
@@ -104,7 +112,7 @@ function make(
 }
 
 /**
- * Parses the file path with gray-matter.
+ * Parses local markdown file with gray-matter.
  * @example
  * ```ts
  * const fs_content = fs.readFileSync("" + p);
@@ -124,10 +132,11 @@ export function parse(p: string) {
     );
   }
 
-  // parsing with gray-matter
   const fs_buffer = fs.readFileSync("" + p);
   const { data: meta, content } = matter(fs_buffer);
 
+  // Wrapping meta around JSON.parse to match
+  // file type of MarkdownFiles read in from db.
   return make(
     path.dirname(p),
     path.basename(p),
@@ -185,12 +194,11 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
 export function fetch(
   dir: string,
   name: string,
-  table: string = "md",
-  location: string = "public/db/archive.db"
+  table: string = (process.env.ARCHIVE_DB || 'md'),
+  location: string = (process.env.ARCHIVE_DB || '/public/db/archive.db')
 ) {
   const Database = require("better-sqlite3");
   const db = new Database(location, { verbose: console.log });
-  //console.log(`checking table ${table} for ${dir}/${name}`);
 
   const row = db
     .prepare(`SELECT * FROM ${table} WHERE dir = '${dir}' AND name = '${name}'`)
@@ -208,12 +216,13 @@ export function fetch(
     return make(
       dir,
       name,
-      require("zlib").deflateSync(content).toString("base64"),
-      meta
+      content,
+      meta,
+      true // Compress flag, content is raw text atm. 
     );
   }
 
-  throw Error(`Missing ${dir}/${name} from archive and markdown directory!`);
+  throw Error(`Missing ${dir}/${name} from archive and local markdown directory!`);
 }
 
 /**
@@ -223,8 +232,8 @@ export function fetch(
  */
 export function read(
   dir: string,
-  table: string = "md",
-  location: string = "public/db/archive.db"
+  table: string = (process.env.ARCHIVE_DB || 'md'),
+  location: string = (process.env.ARCHIVE_DB || '/public/db/archive.db')
 ) {
   const Database = require("better-sqlite3");
   const db = new Database(location, { verbose: console.log });
@@ -250,9 +259,8 @@ export function read(
  */
 export function archive(
   files: MarkdownFile[],
-  table: string = "md",
-  auto_publish: boolean = true,
-  location: string = "public/db/archive.db"
+  table: string = (process.env.ARCHIVE_DB || 'md'),
+  location: string = (process.env.ARCHIVE_DB || '/public/db/archive.db')
 ) {
   // Deleting prior archive
   unlink(location, (err) => {
