@@ -7,8 +7,21 @@ export const env = {
     location: process.env.ARCHIVE_DB || "/public/db/archive.db"
   },
   dirs: {
+    logs: process.env.LOG_DIR || "app/_log",
     posts: path.join(process.env.MD_DIR || "/public/markdown", "posts"),
     learning: path.join(process.env.MD_DIR || "/public/markdown", "learning"),
+  },
+  isDev: process.env.NODE_ENV == 'development',
+  isProd: process.env.NODE_ENV == 'production',
+  options: {
+    /**
+     * Flag to enable console log out statements.
+     */
+    print: process.env.PRINT_MODE == 'true' || false,
+    /**
+     * Flag to enable developer friendly IC print statements.
+     */
+    ic: process.env.IC_MODE == 'true' || false,
   }
 };
 

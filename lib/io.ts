@@ -3,6 +3,22 @@ import path from "path";
 import matter from "gray-matter";
 import { env } from "./consts";
 
+export function getPosts() {
+  const posts = retrieve(env.dirs.posts);
+  if(env.isDev) {
+    logger(
+      { location: path.join(env.dirs.logs, "posts"), overwrite: true },
+      posts
+    );
+  }
+
+  return posts;
+}
+
+export function getLearning() {
+  return retrieve(env.dirs.learning);
+}
+
 /**
  * Retrieves a collection of MarkdownFile for a given directory.
  * @remark
@@ -11,38 +27,25 @@ import { env } from "./consts";
  * @returns
  */
 export function retrieve(dir: string) {
-  // todo - on hosted GH page, I only want markdown files from db.
-  const isProd = false;
-  if (isProd) {
+  if (env.isProd) {
+    // returning database files.
     return read(dir);
   }
 
+  // Merging local md files with database files
+  // when in development or test environment.
   const isMatch = function (x: MarkdownFile, y: MarkdownFile) {
+    ic(`[${x.dir}, ${y.dir}] ${x.dir == y.dir} && [${x.name}, ${y.name}] ${x.name == y.name} == ${x.dir == y.dir && x.name == y.name}`)
     return x.dir == y.dir && x.name == y.name;
   };
 
   const contains = function (x: MarkdownFile, arr: MarkdownFile[]) {
-    return arr.find((y) => isMatch(x, y));
+    return arr.find(y => isMatch(x, y));
   };
 
   // Overwrite any archive files with local content.
   let _local = local(dir);
-  return [
-    ..._local,
-    ...read(dir).filter((file) => {
-      contains(file, _local);
-    }),
-  ];
-}
-
-export function getPosts() {
-
-  console.log("foo =" + process.env.NODE_ENV)
-  return retrieve(env.dirs.posts);
-}
-
-export function getLearning() {
-  return retrieve(env.dirs.learning);
+  return [..._local, ...read(dir).filter((file) => {contains(file, _local)})];
 }
 
 export interface MarkdownFile {
@@ -61,7 +64,17 @@ export interface MarkdownFile {
   /**
    * Information about the markdown file.
    */
-  readonly details: {};
+  readonly details: {
+    link: string;
+    title: string;
+    desc: string;
+    tags: string[];
+    publish?: Date;
+    /**
+     * Defaults to a new date, if missing from front-matter header.
+     */
+    modified: Date;
+  };
   /**
    * Un-compresses the markdown document with zlib.
    */
@@ -95,14 +108,16 @@ function make(
       ? require("zlib").deflateSync(content).toString("base64")
       : content,
     details: {
-      link: `${dir.replace(process.env.MD_DIR, "")}/${name.replace(
-        ".mdx",
+      // stripping the root directory and removing file extension.
+      link: `${dir.replace(
+        process.env.MD_DIR || "public/markdown",
         ""
-      )}`,
+      )}/${name.replace(".mdx", "")}`,
       title: meta["title"],
       desc: meta["desc"] ? meta["desc"] : meta["description"],
       tags: meta["tags"],
       publish: meta["publish"] ? new Date(meta["publish"]) : undefined,
+      modified: meta["modified"] ? new Date(meta["modified"]) : new Date(),
     },
     raw: function (): string {
       return require("zlib")
@@ -115,8 +130,8 @@ function make(
 
 /**
  * Parses local markdown file with gray-matter.
- * @example
- * ```ts
+ * @remarks
+ * ```
  * const fs_content = fs.readFileSync("" + p);
  * const { data: frontMatter, content } = matter(fs_content);
  * ```
@@ -124,7 +139,6 @@ function make(
  * @returns
  */
 function parse(p: string) {
-  // console.log(`running parse(${p})`);
   const isReal = fs.existsSync(p);
   if (isReal && fs.statSync(p).isDirectory()) {
     throw new Error(`unable to parse(${p}).  Given path was a directory!`);
@@ -138,7 +152,7 @@ function parse(p: string) {
   const { data: meta, content } = matter(fs_buffer);
 
   // Wrapping meta around JSON.parse to match
-  // file type of MarkdownFiles read in from db.
+  // file type of MarkdownFiles read in from db.0
   return make(
     path.dirname(p),
     path.basename(p),
@@ -162,6 +176,7 @@ export function local(dir: string) {
   fs.readdirSync(dir).map((file) => {
     files.push(parse(path.join(dir, file)));
   });
+  ic(`local(${dir}) = ${JSON.stringify(files)}`);
   return files;
 }
 
@@ -175,14 +190,16 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
   if (!dir || !fs.existsSync(dir)) {
     throw new Error(`unable to walk(${dir}, ${files})!  Invalid directory!`);
   }
-  //console.log(`running walk(${dir})`)
+  print(`running walk(${dir})`);
   if (fs.statSync(dir).isDirectory()) {
     // p - path variable to re-run the walk command on.
     for (const p of fs.readdirSync(dir).map((name) => path.join(dir, name))) {
       walk(p, files);
     }
   } else if (fs.statSync(dir).isFile()) {
-    files.push(parse(dir));
+    const file = parse(dir);
+    print(`found ${file.name}`);
+    files.push(file);
   }
 
   return files;
@@ -208,10 +225,10 @@ export function fetch(
     .get();
 
   if (row) {
-    //console.log(`found ${dir}/${name} in archive.`)
+    print(`Found ${dir}/${name} in archive db.`);
     return make(row.dir, row.name, row.content, JSON.parse(row.meta));
   } else if (fs.existsSync(path.join(dir, name))) {
-    // console.log(`found ${dir}/${name} in local.`)
+    print(`Found ${dir}/${name} in local markdown directory.`);
     const { data: meta, content } = matter(
       fs.readFileSync(path.join(dir, name), "utf-8")
     );
@@ -243,13 +260,14 @@ export function read(
   const Database = require("better-sqlite3");
   const db = new Database(location, { verbose: console.log });
   const files: MarkdownFile[] = [];
-  console.log("bar=[] " + table + location)
+
   for (const row of db
     .prepare(`SELECT * FROM ${table} WHERE dir = '${dir}'`)
     .all()) {
     files.push(make(row.dir, row.name, row.content, JSON.parse(row.meta)));
   }
 
+  ic(`read(${dir},${table}, ${location}) = ${JSON.stringify(files)}`);
   return files;
 }
 
@@ -267,7 +285,7 @@ export function archive(
   // todos:
   //  - add backup feature?
   //  - test - row count vs source files
-  //  - test - read file from new db.            
+  //  - test - read file from new db.
 
   // Deleting prior archive
   unlink(location, (err) => {
@@ -310,4 +328,67 @@ export function restore(
   location: string = env.archive.location
 ) {
   // todo - build md files from archive db.
+}
+
+/**
+ * Prints lines to console.log()
+ * @remarks
+ * ```
+ * if (env.options.print) {
+ *   lines.every(line => console.log(line));
+ * }
+ * ```
+ */
+export function print(...lines: string[]) {
+  if (env.options.print) {
+    lines.every((line) => console.log(line));
+  }
+}
+
+/**
+ * Prints IC statements to console.log()
+ * @remarks
+ * These print statements are used for debugging the application.
+ */
+export function ic(...lines: string[]) {
+  if (env.options.ic) {
+    lines.every((line) => console.log(line));
+  }
+}
+
+/**
+ * Writes to the log file.
+ * @remarks
+ * If file path doesn't point to an existing file,
+ * a new log file will be written.
+ * @param args - Contains file path & logging options
+ */
+export function log(
+  args: { location: string; overwrite: boolean },
+  lines: string[]
+) {
+  // Creating a new log file, if not found.
+  if (!fs.existsSync(args.location)) {
+    fs.closeSync(fs.openSync(args.location, "w"));
+  }
+
+  if (args.overwrite) {
+    fs.writeFileSync(args.location, lines.join("\n") + "\n");
+  } else {
+    fs.appendFileSync(args.location, lines.join("\n") + "\n");
+  }
+}
+
+// Wrapper to log MarkdownFile[] entities.
+export function logger(
+  args: { location: string; overwrite: boolean },
+  files: MarkdownFile[]
+) {
+  const lines = files.map(
+    (f) =>
+      `${path.join(f.dir, f.name)} | ${f.details.title} | ${
+        f.details.publish
+      } | ${f.details.tags}`
+  );
+  return log(args, lines);
 }
