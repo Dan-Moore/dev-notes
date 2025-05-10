@@ -36,6 +36,8 @@ export function retrieve(dir: string) {
 }
 
 export function getPosts() {
+
+  console.log("foo =" + process.env.NODE_ENV)
   return retrieve(env.dirs.posts);
 }
 
@@ -241,6 +243,7 @@ export function read(
   const Database = require("better-sqlite3");
   const db = new Database(location, { verbose: console.log });
   const files: MarkdownFile[] = [];
+  console.log("bar=[] " + table + location)
   for (const row of db
     .prepare(`SELECT * FROM ${table} WHERE dir = '${dir}'`)
     .all()) {
@@ -251,14 +254,10 @@ export function read(
 }
 
 /**
- *
+ * Stores markdown documents to archive.db
  * @param files - Markdown documents ready to be stored in SQLiteDB
  * @param table - Table name: defaults to 'md'
- * @param auto_publish - Flag to add a new publish date to the file meta data.
- * @param purge_source - Flag to remove the source file.  By default it's set to false.
- * @param compress - Flag to compress file content with zlib
  * @param location - Path to the archive file
- * @param backup - Flag to preserve the prior archive
  */
 export function archive(
   files: MarkdownFile[],

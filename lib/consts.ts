@@ -3,7 +3,7 @@ import path from "path";
 
 export const env = {
   archive: {
-    table: process.env.ARCHIVE_DB || "md",
+    table: process.env.ARCHIVE_TABLE || "md",
     location: process.env.ARCHIVE_DB || "/public/db/archive.db"
   },
   dirs: {
