@@ -1,51 +1,69 @@
-import fs from "fs";
+import fs, { unlink } from "fs";
 import path from "path";
 import matter from "gray-matter";
+import { dirs } from "./consts";
+
+export function posts() {
+  // reading only root files in the blog directory.
+  const files = directory(`${process.env.MD_DIR}/posts`);
+  return files;
+}
 
 export interface MarkdownFile {
   readonly dir: string;
   readonly name: string;
-  readonly link: string;
+  /**
+   * Compressed markdown document with zlib.
+   * @remarks
+   * require("zlib").deflateSync(content).toString("base64")
+   */
   readonly content: string;
   /**
-   * @remarks
-   * all front-matter headers. For common re-useable fields, add them to details.
+   * Dictionary of front-matter headers.
    */
   readonly meta: { [key: string]: any } | {};
-  readonly details: {
-    dates: Date[] | [];
-    title: string;
-    desc: string;
-    tags: string[] | [];
-    author: string | undefined;
-    publish: Date | undefined;
-    /**
-     * @returns returns true if 'draft' was found in headers or before publish date.
-     */
-    draft: boolean | true;
-  };
   /**
-   * fetches H# headers from the markdown file.
-   * @remarks
-   * Sample:
-   * [{level:0, raw:'# Hello World', label:'Hello World', link: '#hello-world'}]
-   * @returns
+   * Information about the markdown file.
    */
-  headers: () => [
-    {
-      level: number;
-      raw: string;
-      label: string;
-      link: string;
-    }
-  ];
+  readonly details: {};
+  /**
+   * Un-compresses the markdown document with zlib.
+   */
+  raw: () => string;
 }
 
-export interface MarkdownDirectory {
-  readonly title: string;
-  readonly dates: Date[];
-  readonly banner: MarkdownFile;
-  readonly files: MarkdownFile[];
+/**
+ * Helper function to make MarkdownFile objects
+ */
+function make(
+  dir: string,
+  name: string,
+  content: string,
+  meta: { [key: string]: any }
+) {
+  // building file object.
+  const file: MarkdownFile = {
+    dir: dir,
+    name: name,
+    meta: meta,
+    content: content,
+    details: {
+      link: `${dir.replace(process.env.MD_DIR, "")}/${name.replace(
+        ".mdx",
+        ""
+      )}`,
+      title: meta["title"],
+      desc: meta["desc"] ? meta["desc"] : meta["description"],
+      tags: meta["tags"],
+      publish: meta["publish"] ? new Date(meta["publish"]) : undefined,
+    },
+    raw: function (): string {
+      return require("zlib")
+        .inflateSync(Buffer.from(file.content, "base64"))
+        .toString();
+    },
+  };
+  return file;
 }
 
 /**
@@ -73,72 +91,12 @@ export function parse(p: string) {
   const fs_buffer = fs.readFileSync("" + p);
   const { data: meta, content } = matter(fs_buffer);
 
-  // pulling out any fields called date or dates
-  // both fields will be combine into one set.
-  function getDates(meta: { [key: string]: any }): Date[] {
-    let dates: Date[] = [];
-    if (!meta["date"] && !meta["dates"]) {
-      return dates;
-    } 
-
-    for(let value of [meta["date"], meta["dates"]]) {
-      if(typeof value == typeof Array) {
-        dates = [
-          ...dates,
-          ...value.map((date: string) => new Date(date)),
-        ];
-      } else {
-        dates.push(new Date(value));
-      }
-    }
-    return dates;
-  }
-
-  function buildHeaders(content: string) {
-    const raw_headers = content.split("\n").filter((line) => {
-      return line.charAt(0) == "#";
-    });
-
-    // building headers
-    return raw_headers.map((raw) => {
-      let i; // why
-      for (
-        i = 0;
-        i < 6 && `${raw.slice(0, i)}#` == raw.slice(0, i + 1);
-        i++
-      ) {}
-
-      return {
-        level: i,
-        raw: raw,
-        label: raw.slice(i + 1),
-        link: raw.slice(i + 1).toLowerCase().replaceAll(' ','-'),
-      };
-    });
-  }
-
-  // building file object.
-  return {
-    dir: path.dirname(p),
-    name: path.basename(p),
-    meta: meta,
-    content: content,
-    link: p.replace(process.env.MD_DIR, "").replace(".mdx", ""),
-    details: {
-      dates: getDates(meta),
-      title: meta["title"],
-      desc: meta["desc"] ? meta["desc"] : meta["description"],
-      tags: meta["tags"],
-      author: meta["author"] ? meta["author"] : process.env.AUTHOR,
-      publish: meta["publish"] ? new Date(meta["publish"]) : undefined,
-      draft: meta["draft"]
-        ? meta["draft"]
-        : meta["publish"]
-        ? new Date() < new Date(meta["publish"])
-        : true,
-    },
-    headers: buildHeaders(content)
-  };
+  return make(
+    path.dirname(p),
+    path.basename(p),
+    require("zlib").deflateSync(content).toString("base64"),
+    meta
+  );
 }
 
 /**
@@ -150,7 +108,7 @@ export function parse(p: string) {
  * @param dir - directory
  * @returns
  */
-export function read_dir(dir: string) {
+export function directory(dir: string) {
   const files: MarkdownFile[] = [];
   fs.readdirSync(dir).map((fs_file) => {
     files.push(parse(path.join(dir, fs_file)));
@@ -180,39 +138,85 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
   return files;
 }
 
-export function posts() {
-  // reading only root files in the blog directory.
-  let foo = read_dir(`${process.env.MD_DIR}/posts`);
-  console.log(foo[0].headers);
-  return foo;
+/**
+ * Searches the archive, the local file system for a given file.
+ * @throws Error - If given file is missing from archive and local.
+ */
+export function fetch(dir: string, name: string, table: string = "md") {
+  const Database = require("better-sqlite3");
+  const db = new Database("public/db/archive.db", { verbose: console.log });
+  //console.log(`checking table ${table} for ${dir}/${name}`);
+  
+  const result = db
+    .prepare(`SELECT * FROM ${table} WHERE dir = '${dir}' AND name = '${name}'`)
+    .get();
+
+  if (result) {
+    //console.log(`found ${dir}/${name} in archive.`)
+    return make(result.dir, result.name, result.content, JSON.parse(result.meta));
+  } else if(fs.existsSync(path.join(dir, name))) {
+    // console.log(`found ${dir}/${name} in local.`)
+    const { data: meta, content } = matter(fs.readFileSync(
+      path.join(dir, name),
+      "utf-8"
+      ));
+    
+    return make(dir, name, require("zlib").deflateSync(content).toString("base64"), meta);
+  }
+
+  throw Error(`Missing ${dir}/${name} from archive and markdown directory!`)
 }
 
-export function resources() {
-  const files = walk(`${process.env.MD_DIR}/learning`);
-
-  // fetching all banner files.
-  const banners = files.filter((file) => {
-    //console.log(`checking name: ${file.name} - ${file.name?.startsWith("banner.md")}`)
-    return file.name?.startsWith("banner.md");
+/**
+ *
+ * @param files - Markdown documents ready to be stored in SQLiteDB
+ * @param table - Table name: defaults to 'md'
+ * @param auto_publish - Flag to add a new publish date to the file meta data.
+ * @param purge_source - Flag to remove the source file.  By default it's set to false.
+ * @param compress - Flag to compress file content with zlib
+ * @param location - Path to the archive file
+ * @param backup - Flag to preserve the prior archive
+ */
+export function archive(
+  files: MarkdownFile[],
+  table: string = "md",
+  auto_publish: boolean = true,
+  location: string = "public/db/archive.db"
+) {
+  // Deleting prior archive
+  unlink(location, (err) => {
+    if (err) throw err;
+    console.log(`Deleting SQLite archive at: ${location}`);
   });
-  //console.log(`banners: \n${JSON.stringify(banners)}`);
+  fs.closeSync(fs.openSync(location, "w")); // touching new file.
 
-  // building
-  const dirs: MarkdownDirectory[] = [
-    ...banners.map((banner) => {
-      const event: MarkdownDirectory = {
-        title: banner.details.title,
-        dates: banner.details.dates ? banner.details.dates : [new Date()],
-        banner: banner,
-        //grabbing all files in the same banner directory.
-        files: files.filter((file) => {
-          //console.log(`checking ${file.dir} == ${banner.dir} on ${file.name}`)
-          //console.log(file.dir == banner.dir && !file.name?.startsWith("banner.md"))
-          return file.dir == banner.dir && !file.name?.startsWith("banner.md");
-        }),
+  const Database = require("better-sqlite3");
+  const db = new Database(location, { verbose: console.log });
+
+  // Re-creating the new table.
+  const stmt = db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${table}('dir' varchar, 'name' varchar, 'content' blob, 'meta' blob);`
+  );
+  stmt.run();
+
+  // Inserting files as transactions
+  const insert = db.prepare(
+    `INSERT INTO ${table} (dir, name, content, meta) VALUES (@dir, @name, @content, @meta)`
+  );
+  const insertMany = db.transaction((x) => {
+    for (const file of x) insert.run(file);
+  });
+
+  insertMany(
+    files.map((file) => {
+      return {
+        dir: file.dir,
+        name: file.name,
+        content: file.content,
+        meta: JSON.stringify(file.meta),
       };
-      return event;
-    }),
-  ];
-  return dirs;
+    })
+  );
 }
+
+

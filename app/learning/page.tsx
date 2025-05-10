@@ -6,7 +6,6 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 
-import { resources } from "@/lib/io"
 import fs from "fs";
 import { dirs } from "@/lib/consts";
 
@@ -25,8 +24,7 @@ export async function generateStaticParams() {
 }
 
 export default function Page(props0: { params: Promise<{ slug: string }> }) {
-  const data = JSON.stringify(resources())
-  //console.log(dirs)
+
   return (
     <SidebarProvider defaultOpen={false} 
       style={

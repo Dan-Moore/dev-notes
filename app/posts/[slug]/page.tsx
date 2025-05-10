@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { components } from "@/components/mdx";
 import { dirs } from "@/lib/consts";
+import { fetch, archive, posts } from "@/lib/io";
 import { SiteFooter } from "@/components/site-footer";
 
 // Content for these pages will be fetched with getPost function.
@@ -12,11 +13,14 @@ import { SiteFooter } from "@/components/site-footer";
 // It also returns the slug itself, which Next.js will use to determine which page to render at build time.
 //For example, { props: { slug: "my-first-post", content: "..." } }
 async function getPost({ slug }: { slug: string }) {  
-    const markdownFile = fs.readFileSync(
-    path.join(dirs.posts, slug + ".mdx"),
-    "utf-8"
-  );
-  const { data: frontMatter, content } = matter(markdownFile);
+    //const markdownFile = fs.readFileSync(
+    //path.join(dirs.posts, slug + ".mdx"),
+    //"utf-8"
+  //);
+  //console.log(`slug = ` + slug)
+  const post = fetch(dirs.posts, `${slug}.mdx`)
+
+  const { data: frontMatter, content } = matter(post.raw());
   return {
     frontMatter,
     slug,
