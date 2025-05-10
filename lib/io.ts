@@ -39,14 +39,15 @@ function make(
   dir: string,
   name: string,
   content: string,
-  meta: { [key: string]: any }
+  meta: { [key: string]: any},
+  compress: boolean = false,
 ) {
   // building file object.
   const file: MarkdownFile = {
     dir: dir,
     name: name,
     meta: meta,
-    content: content,
+    content: (compress) ? require("zlib").deflateSync(content).toString("base64") : content,
     details: {
       link: `${dir.replace(process.env.MD_DIR, "")}/${name.replace(
         ".mdx",
@@ -94,8 +95,9 @@ export function parse(p: string) {
   return make(
     path.dirname(p),
     path.basename(p),
-    require("zlib").deflateSync(content).toString("base64"),
-    meta
+    content,
+    meta,
+    true
   );
 }
 
