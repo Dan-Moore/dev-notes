@@ -3,10 +3,44 @@ import path from "path";
 import matter from "gray-matter";
 import { dirs } from "./consts";
 
+/**
+ * Retrieves a collection of MarkdownFile for a given directory.
+ * @remark 
+ * While in production mode, only return files from archive.db 
+ * @param dir
+ * @returns
+ */
+export function retrieve(dir: string) {
+  const isProd = false;
+  if (isProd) {
+    // only display pages
+    return read(dir); // from the archive.db
+  }
+
+  const isMatch = function (x: MarkdownFile, y: MarkdownFile) {
+    return x.dir == y.dir && x.name == y.name;
+  };
+
+  const contains = function (x: MarkdownFile, arr: MarkdownFile[]) {
+    return arr.find((y) => isMatch(x, y));
+  };
+
+  // Overwrite any archive files with local content.
+  let _local = local(dir);
+  return [
+    ..._local,
+    ...read(dir).filter((file) => {
+      contains(file, _local);
+    }),
+  ];
+}
+
 export function posts() {
-  // reading only root files in the blog directory.
-  const files = directory(`${process.env.MD_DIR}/posts`);
-  return files;
+  return retrieve(`${process.env.MD_DIR}/posts`)
+}
+
+export function learningResources() {
+  return retrieve(`${process.env.MD_DIR}/learning`)
 }
 
 export interface MarkdownFile {
@@ -39,15 +73,17 @@ function make(
   dir: string,
   name: string,
   content: string,
-  meta: { [key: string]: any},
-  compress: boolean = false,
+  meta: { [key: string]: any },
+  compress: boolean = false
 ) {
   // building file object.
   const file: MarkdownFile = {
     dir: dir,
     name: name,
     meta: meta,
-    content: (compress) ? require("zlib").deflateSync(content).toString("base64") : content,
+    content: compress
+      ? require("zlib").deflateSync(content).toString("base64")
+      : content,
     details: {
       link: `${dir.replace(process.env.MD_DIR, "")}/${name.replace(
         ".mdx",
@@ -96,7 +132,7 @@ export function parse(p: string) {
     path.dirname(p),
     path.basename(p),
     content,
-    meta,
+    JSON.parse(JSON.stringify(meta)),
     true
   );
 }
@@ -110,7 +146,7 @@ export function parse(p: string) {
  * @param dir - directory
  * @returns
  */
-export function directory(dir: string) {
+export function local(dir: string) {
   const files: MarkdownFile[] = [];
   fs.readdirSync(dir).map((fs_file) => {
     files.push(parse(path.join(dir, fs_file)));
@@ -141,32 +177,65 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
 }
 
 /**
- * Searches the archive, the local file system for a given file.
+ * Searches the archive database for the given file.
+ * @remarks
+ * If missing from
  * @throws Error - If given file is missing from archive and local.
  */
-export function fetch(dir: string, name: string, table: string = "md") {
+export function fetch(
+  dir: string,
+  name: string,
+  table: string = "md",
+  location: string = "public/db/archive.db"
+) {
   const Database = require("better-sqlite3");
-  const db = new Database("public/db/archive.db", { verbose: console.log });
+  const db = new Database(location, { verbose: console.log });
   //console.log(`checking table ${table} for ${dir}/${name}`);
-  
-  const result = db
+
+  const row = db
     .prepare(`SELECT * FROM ${table} WHERE dir = '${dir}' AND name = '${name}'`)
     .get();
 
-  if (result) {
+  if (row) {
     //console.log(`found ${dir}/${name} in archive.`)
-    return make(result.dir, result.name, result.content, JSON.parse(result.meta));
-  } else if(fs.existsSync(path.join(dir, name))) {
+    return make(row.dir, row.name, row.content, JSON.parse(row.meta));
+  } else if (fs.existsSync(path.join(dir, name))) {
     // console.log(`found ${dir}/${name} in local.`)
-    const { data: meta, content } = matter(fs.readFileSync(
-      path.join(dir, name),
-      "utf-8"
-      ));
-    
-    return make(dir, name, require("zlib").deflateSync(content).toString("base64"), meta);
+    const { data: meta, content } = matter(
+      fs.readFileSync(path.join(dir, name), "utf-8")
+    );
+
+    return make(
+      dir,
+      name,
+      require("zlib").deflateSync(content).toString("base64"),
+      meta
+    );
   }
 
-  throw Error(`Missing ${dir}/${name} from archive and markdown directory!`)
+  throw Error(`Missing ${dir}/${name} from archive and markdown directory!`);
+}
+
+/**
+ * Retrieves directory files from archive.db
+ * @param dir
+ * @param location
+ */
+export function read(
+  dir: string,
+  table: string = "md",
+  location: string = "public/db/archive.db"
+) {
+  const Database = require("better-sqlite3");
+  const db = new Database(location, { verbose: console.log });
+  const files: MarkdownFile[] = [];
+  for (const row of db
+    .prepare(`SELECT * FROM ${table} WHERE dir = '${dir}'`)
+    .all()) {
+    files.push(make(row.dir, row.name, row.content, JSON.parse(row.meta)));
+  }
+
+  return files;
 }
 
 /**
@@ -220,5 +289,3 @@ export function archive(
     })
   );
 }
-
-
