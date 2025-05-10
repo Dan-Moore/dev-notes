@@ -10,7 +10,7 @@ import {page_links } from "@/lib/consts"
 
 export function SiteFooter() {
   return (
-    <footer className="border-grid border-t py-6 md:py-0 sticky bottom-1 ">
+    <footer className="border-grid border-t md:px-9 py-6 md:py-0 sticky  bottom-1  ">
       <div className="grid grid-cols-4 gap-4 ">
           <TooltipProvider>
           {page_links.map((page, index) => (

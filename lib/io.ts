@@ -3,11 +3,11 @@ import path from "path";
 import matter from "gray-matter";
 import { env } from "./consts";
 
-export function getPosts() {
+export function posts() {
   const posts = retrieve(env.dirs.posts);
   if(env.isDev) {
     logger(
-      { location: path.join(env.dirs.logs, "posts"), overwrite: true },
+      { location: path.join(env.dirs.logs, "pages", "posts"), overwrite: true },
       posts
     );
   }
@@ -290,7 +290,7 @@ export function archive(
   // Deleting prior archive
   unlink(location, (err) => {
     if (err) throw err;
-    console.log(`Deleting SQLite archive at: ${location}`);
+    print(`Deleting SQLite archive at: ${location}`);
   });
   fs.closeSync(fs.openSync(location, "w")); // touching new file.
 
@@ -379,16 +379,26 @@ export function log(
   }
 }
 
-// Wrapper to log MarkdownFile[] entities.
+/** 
+ *  Wrapper to log MarkdownFile[] entities.
+// Using slice()
+const newString1: string = myString.slice(0, -1)
+*/
 export function logger(
   args: { location: string; overwrite: boolean },
   files: MarkdownFile[]
 ) {
-  const lines = files.map(
+  let lines = files.map(
     (f) =>
-      `${path.join(f.dir, f.name)} | ${f.details.title} | ${
-        f.details.publish
-      } | ${f.details.tags}`
+      JSON.stringify({
+        path: path.join(f.dir, f.name),
+        publish: f.details.publish?.toISOString() || '',
+        modified: f.details.modified.toISOString() ,
+        title: f.details.title,
+        tags: f.details.tags
+      }) + ',' // Adding a tailing ',' for future entries.
   );
-  return log(args, lines);
+  // Removing the tailing ',' on the last entry.
+  lines[lines.length -1] = lines[lines.length -1].slice(0, -1)
+  return log(args, ['[', ...lines, ']']);
 }

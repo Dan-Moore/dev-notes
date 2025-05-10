@@ -3,12 +3,10 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { getPosts } from "@/lib/io";
+import { posts } from "@/lib/io";
 import Link from "next/link";
 
-export default function Page() {
-  const posts = getPosts()
-  
+export default function Page() {  
   return (
     <SidebarProvider defaultOpen={false} 
     style={
@@ -22,7 +20,7 @@ export default function Page() {
     <SidebarInset>
       <SiteHeader />
       <div className="grid gap-6 py-6 px-10">
-      {posts.map((post) => (
+      {posts().map((post) => (
           <article key={post.details.link} className="border rounded-lg p-6 hover:shadow-md transition">
             <Link href={post.details.link} className="block space-y-3">
             <h2 className="text-2xl font-bold">{post?.details?.title}</h2>

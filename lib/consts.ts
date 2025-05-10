@@ -7,7 +7,7 @@ export const env = {
     location: process.env.ARCHIVE_DB || "/public/db/archive.db"
   },
   dirs: {
-    logs: process.env.LOG_DIR || "app/_log",
+    logs: process.env.LOG_DIR || "app/_logs",
     posts: path.join(process.env.MD_DIR || "/public/markdown", "posts"),
     learning: path.join(process.env.MD_DIR || "/public/markdown", "learning"),
   },
