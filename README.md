@@ -59,10 +59,11 @@ export interface MarkdownFile {
 The `fs.readdirSync(dir)` is used in a recursive directory walk to build a collection of `MarkdownFile` objects.
 
 ```tsx
-export function walk(dir: string, files: MarkdownFile[] = []) {
+function walk(dir: string, files: MarkdownFile[] = []) {
   if (!dir || !fs.existsSync(dir)) {
     throw new Error(`unable to walk(${dir}, ${files})!  Invalid directory!`);
   }
+
   print(`running walk(${dir})`);
   if (fs.statSync(dir).isDirectory()) {
     // p - path variable to re-run the walk command on.
@@ -85,11 +86,20 @@ A file read operation is done with [`fs.readFileSync(p)`](https://nodejs.org/api
 
 `make` is a helper function that creates `MarkdownFile` objects.  See [io.ts](/lib/io.ts) for usage.
 ```tsx
+/**
+ * Parses local markdown file with gray-matter.
+ * @remarks
+ * ```
+ * const fs_content = fs.readFileSync(p);
+ * const { data: frontMatter, content } = matter(fs_content);
+ * ```
+ * @param p - path variable: 'public/markdown/hi.mdx'
+ *
 function parse(p: string) {
   const { data: headers, content } = matter(fs.readFileSync(p));
-
-  // Wrapping meta around JSON.parse to match
-  // file type of MarkdownFiles read in from db.
+  // JSON.parse here is redundant. 
+  // Forcing data type to match with a MarkdownFile
+  // retrieved from the database. 
   return make(
     path.dirname(p),
     path.basename(p),
@@ -97,7 +107,6 @@ function parse(p: string) {
     JSON.parse(JSON.stringify(headers)),
     true
   );
-}
 ```
 
 ## SQLite
