@@ -80,16 +80,8 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
 ```
 
 ### Parsing Markdown Docs
-Markdown documents are read in using [fs](https://nodejs.org/api/fs.html#fsreadfilesyncpath-options) and [gray-matter](https://github.com/jonschlinkert/gray-matter)
-```mdx
----
-title: Hello
-slug: home
----
-<h1>Hello world!</h1>
-```
 
-The `fs.readFileSync(p)` is used to read in the file and `matter` is used to strip out the front-matter headers from the markdown document.
+A file read operation is done with [`fs.readFileSync(p)`](https://nodejs.org/api/fs.html#fsreadfilesyncpath-options) and [`matter`](https://github.com/jonschlinkert/gray-matter) is used to strip out the front-matter headers from the markdown document.
 
 `make` is a helper function that creates `MarkdownFile` objects.  See [io.ts](/lib/io.ts) for usage.
 ```tsx
