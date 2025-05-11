@@ -7,7 +7,7 @@ export function posts() {
   const posts = retrieve(env.dirs.posts);
   if(env.isDev) {
     logger(
-      { location: path.join(env.dirs.logs, "pages", "posts"), overwrite: true },
+      { location: path.join(env.dirs.logs, "pages", "posts.json"), overwrite: true },
       posts
     );
   }
@@ -15,7 +15,7 @@ export function posts() {
   return posts;
 }
 
-export function getLearning() {
+export function learnings() {
   return retrieve(env.dirs.learning);
 }
 
@@ -23,19 +23,17 @@ export function getLearning() {
  * Retrieves a collection of MarkdownFile for a given directory.
  * @remark
  * While in production mode, only return files from archive.db
- * @param dir
- * @returns
+ * @param dir - Directory path
  */
 export function retrieve(dir: string) {
   if (env.isProd) {
-    // returning database files.
     return read(dir);
   }
 
   // Merging local md files with database files
-  // when in development or test environment.
+  // when in 'development' or 'test' environment.
   const isMatch = function (x: MarkdownFile, y: MarkdownFile) {
-    ic(`[${x.dir}, ${y.dir}] ${x.dir == y.dir} && [${x.name}, ${y.name}] ${x.name == y.name} == ${x.dir == y.dir && x.name == y.name}`)
+    icp(`[${x.dir}, ${y.dir}] ${x.dir == y.dir} && [${x.name}, ${y.name}] ${x.name == y.name} == ${x.dir == y.dir && x.name == y.name}`)
     return x.dir == y.dir && x.name == y.name;
   };
 
@@ -79,6 +77,10 @@ export interface MarkdownFile {
    * Un-compresses the markdown document with zlib.
    */
   raw: () => string;
+  /**
+   * H# headers found within the document.
+   */
+  headers:() => {level: number, raw: string, label: string, link: string}[];
 }
 
 /**
@@ -124,6 +126,10 @@ function make(
         .inflateSync(Buffer.from(file.content, "base64"))
         .toString();
     },
+    headers: function(){
+      const foo = [{level: 1, raw: 'string', label: "string", link: "string"}];
+      return foo;
+    }
   };
   return file;
 }
@@ -132,10 +138,10 @@ function make(
  * Parses local markdown file with gray-matter.
  * @remarks
  * ```
- * const fs_content = fs.readFileSync("" + p);
+ * const fs_content = fs.readFileSync(p);
  * const { data: frontMatter, content } = matter(fs_content);
  * ```
- * @param p path variable - public/markdown/hi.mdx
+ * @param p - path variable: 'public/markdown/hi.mdx'
  * @returns
  */
 function parse(p: string) {
@@ -144,20 +150,19 @@ function parse(p: string) {
     throw new Error(`unable to parse(${p}).  Given path was a directory!`);
   } else if (!isReal || !fs.statSync(p).isFile()) {
     throw new Error(
-      `unable to parse(${p}).  Unknown object failed either fs.existsSync(${p}) or fs.statSync(${p}).isFile().`
+      `Unable to parse(${p})!\nUnknown object failed either fs.existsSync(${p}) or fs.statSync(${p}).isFile().`
     );
   }
 
-  const fs_buffer = fs.readFileSync("" + p);
-  const { data: meta, content } = matter(fs_buffer);
-
-  // Wrapping meta around JSON.parse to match
-  // file type of MarkdownFiles read in from db.0
+  const { data: headers, content } = matter(fs.readFileSync(p));
+  // JSON.parse here is redundant. 
+  // Forcing data type to match with a MarkdownFile
+  // retrieved from the database. 
   return make(
     path.dirname(p),
     path.basename(p),
     content,
-    JSON.parse(JSON.stringify(meta)),
+    JSON.parse(JSON.stringify(headers)),
     true
   );
 }
@@ -176,14 +181,14 @@ export function local(dir: string) {
   fs.readdirSync(dir).map((file) => {
     files.push(parse(path.join(dir, file)));
   });
-  ic(`local(${dir}) = ${JSON.stringify(files)}`);
+  icp(`local(${dir}) = ${JSON.stringify(files)}`);
   return files;
 }
 
 /**
  * Recursive directory walk.
- * @param dir - /public/markdown/calendar
- * @param files - optional []. List of found files in the dir
+ * @param dir - directory path: /public/markdown/posts
+ * @param files - directory files, defaults to [] on first walk call.
  * @returns
  */
 export function walk(dir: string, files: MarkdownFile[] = []) {
@@ -267,7 +272,7 @@ export function read(
     files.push(make(row.dir, row.name, row.content, JSON.parse(row.meta)));
   }
 
-  ic(`read(${dir},${table}, ${location}) = ${JSON.stringify(files)}`);
+  icp(`read(${dir},${table}, ${location}) = ${JSON.stringify(files)}`);
   return files;
 }
 
@@ -346,12 +351,12 @@ export function print(...lines: string[]) {
 }
 
 /**
- * Prints IC statements to console.log()
+ * I C Print statements to console.log()
  * @remarks
  * These print statements are used for debugging the application.
  */
-export function ic(...lines: string[]) {
-  if (env.options.ic) {
+export function icp(...lines: string[]) {
+  if (env.options.icp) {
     lines.every((line) => console.log(line));
   }
 }

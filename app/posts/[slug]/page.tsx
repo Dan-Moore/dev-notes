@@ -10,9 +10,7 @@ async function getPost({ slug }: { slug: string }) {
   return post;
 }
 
-
 export async function generateStaticParams() {
-  //const files = fs.readdirSync(env.dirs.posts);
   const params = posts().map((file) => ({
     slug: file.name.replace(".mdx", ""),
   }));
