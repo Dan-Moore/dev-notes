@@ -1,18 +1,22 @@
 # Hello World
-This website was build with [Next.js](https://nextjs.org/docs) and [shadcn](https://ui.shadcn.com/).
+This website was built using [Next.js](https://nextjs.org/docs) and design with [shadcn](https://ui.shadcn.com/).  
+
+Markdown files are compressed and stored within a SQLite database before rendering with [MDX](https://nextjs.org/docs/app/guides/mdx) to build web components.
+
 
 ![react](/public/images/react-native.svg) ![markdown](/public/images/markdown.svg) ![sqlite](/public/images/sqlite.svg)
 
 ## NPM Cheat Sheet
-Following are some basic npm commands for 
+Following are some basic npm commands and their usage.
 - `npm install` - Downloads and install npm packages.  Review [package.json](/package.json)
 - `npm update` - Updates npm packages
 - `npm run dev` - Runs a local instance at [http://localhost:3333](http://localhost:3333) or next available port #
+- `npm run build` - Runs the build script. Will archive markdown pages ready for publication.
 
 ## Markdown
-Most pages will be written in markdown. A [root](/public/markdown/) directory houses folders used by [App Router](https://nextjs.org/docs/app/building-your-application/routing). 
+Most pages will be written in markdown. A [root](/public/markdown/) directory houses folders used by [App Router](https://nextjs.org/docs/app/building-your-application/routing).
 
-To render a markdown page.  [MDXRemote](https://nextjs.org/docs/app/guides/mdx) is used to load in the page content.
+To render a markdown page, [MDXRemote](https://nextjs.org/docs/app/guides/mdx#remote-mdx) is used to load in the page content.
 ```tsx
 <div className="flex-1 p-6">
   <MDXRemote source={file.content} components={components} />
@@ -25,7 +29,12 @@ export default function Page() {
   return (<><WebPage /></>)
 }
 ```
+
 ### Schema
+`MarkdownFile` is an object I'm using to store parsed data from a Markdown file with `/public/markdown`
+The file contains the source text compressed and has a `raw()` function built-in to uncompress the file for MDX Remote.
+
+See [io.ts](/lib/io.ts) for latest implementation.
 ```tsx
 export interface MarkdownFile {
   dir: string;                         // Path of the Directory 
@@ -41,11 +50,13 @@ export interface MarkdownFile {
     modified: Date;                    // Date of last mod - defaults to current
   };
   raw: () => string;                   // Function to uncompress the markdown doc
+                                       // Function to return H# sections
+  headers:() => {level: number, raw: string, label: string, link: string}
 }
 ```
 
 ### Directory Dumps & Walks
-The `fs.readdirSync(dir)` is used in a recursive directory walk to build a collection of `MarkdownFile` objects
+The `fs.readdirSync(dir)` is used in a recursive directory walk to build a collection of `MarkdownFile` objects.
 
 ```tsx
 export function walk(dir: string, files: MarkdownFile[] = []) {
@@ -97,4 +108,5 @@ function parse(p: string) {
 }
 ```
 
-
+## SQLite
+todo
