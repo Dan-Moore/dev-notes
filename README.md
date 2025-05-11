@@ -1,26 +1,100 @@
-[md](public/images/markdown.svg)
-
 # Hello World
 This website was build with [Next.js](https://nextjs.org/docs) and [shadcn](https://ui.shadcn.com/).
+
+![react](/public/images/react-native.svg) ![markdown](/public/images/markdown.svg) ![sqlite](/public/images/sqlite.svg)
 
 ## NPM Cheat Sheet
 Following are some basic npm commands for 
 - `npm install` - Downloads and install npm packages.  Review [package.json](/package.json)
 - `npm update` - Updates npm packages
-- `npm run dev` - Runs a local instance at [http://localhost:3000](http://localhost:3000) or next available port #
+- `npm run dev` - Runs a local instance at [http://localhost:3333](http://localhost:3333) or next available port #
 
 ## Markdown
 Most pages will be written in markdown. A [root](/public/markdown/) directory houses folders used by [App Router](https://nextjs.org/docs/app/building-your-application/routing). 
 
-Re-useable environment variables have been added to [.env](/.env) 
-Sample use case: `process.env.MD_DIR`
-
 To render a markdown page.  [MDXRemote](https://nextjs.org/docs/app/guides/mdx) is used to load in the page content.
-```typescript
+```tsx
 <div className="flex-1 p-6">
-  <MDXRemote source={event.banner.content} components={components} />
+  <MDXRemote source={file.content} components={components} />
 </div>
+```
+Files can also be directly imported as components.
+```tsx
+import WebPage from "./nixos.mdx"
+export default function Page() {
+  return (<><WebPage /></>)
+}
+```
+### Schema
+```tsx
+export interface MarkdownFile {
+  dir: string;                         // Path of the Directory 
+  name: string;                        // Name of the file
+  content: string;                     // File contents, compressed with zlib
+  meta: { [key: string]: any } | {};   // Front-Matter header dictionary  
+  details: {                           // Contains usable fields for app components
+    link: string;                      // Link to the webpage
+    title: string;                     // Title of the document
+    desc: string;                      // Description of the document
+    tags: string[];                    // Related subject tags of the document
+    publish?: Date;                    // Date of publication - nullable 
+    modified: Date;                    // Date of last mod - defaults to current
+  };
+  raw: () => string;                   // Function to uncompress the markdown doc
+}
+```
+
+### Directory Dumps & Walks
+The `fs.readdirSync(dir)` is used in a recursive directory walk to build a collection of `MarkdownFile` objects
+
+```tsx
+export function walk(dir: string, files: MarkdownFile[] = []) {
+  if (!dir || !fs.existsSync(dir)) {
+    throw new Error(`unable to walk(${dir}, ${files})!  Invalid directory!`);
+  }
+  print(`running walk(${dir})`);
+  if (fs.statSync(dir).isDirectory()) {
+    // p - path variable to re-run the walk command on.
+    for (const p of fs.readdirSync(dir).map((name) => path.join(dir, name))) {
+      walk(p, files);
+    }
+  } else if (fs.statSync(dir).isFile()) {
+    const file = parse(dir);
+    print(`found ${file.name}`);
+    files.push(file);
+  }
+
+  return files;
+}
 ```
 
 ### Parsing Markdown Docs
-See [io.ts](/lib/io.ts).
+Markdown documents are read in using [fs](https://nodejs.org/api/fs.html#fsreadfilesyncpath-options) and [gray-matter](https://github.com/jonschlinkert/gray-matter)
+```mdx
+---
+title: Hello
+slug: home
+---
+<h1>Hello world!</h1>
+```
+
+The `fs.readFileSync(p)` is used to read in the file and `matter` is used to strip out the front-matter headers from the markdown document.
+
+`make` is a helper function that creates `MarkdownFile` objects.  See [io.ts](/lib/io.ts) for usage.
+```tsx
+function parse(p: string) {
+  const { data: headers, content } = matter(fs.readFileSync(p));
+
+  // Wrapping meta around JSON.parse to match
+  // file type of MarkdownFiles read in from db.
+  return make(
+    path.dirname(p),
+    path.basename(p),
+    content,
+    JSON.parse(JSON.stringify(headers)),
+    true
+  );
+}
+```
+
+
