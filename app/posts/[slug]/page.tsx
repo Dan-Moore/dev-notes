@@ -6,7 +6,7 @@ import { fetch, posts } from "@/lib/io";
 import { SiteFooter } from "@/components/site-footer";
 
 async function getPost({ slug }: { slug: string }) {  
-  const post = fetch(env.dirs.posts, `${slug}.mdx`)
+  const post = fetch(env.paths.db.posts, env.paths.md.posts, `${slug}.mdx`)
   return post;
 }
 

@@ -3,20 +3,60 @@ import path from "path";
 import matter from "gray-matter";
 import { env } from "./consts";
 
+/**
+ * Returns markdown pages stored in posts.db
+ * @remarks
+ * When building locally in developer mode. Non publish pages
+ * will be visible. Local markdown files in `/public` will be rendered.
+ *
+ * `npm run dev`
+ * @returns
+ * Collection of MarkdownFile found with posts
+ */
 export function posts() {
-  const posts = retrieve(env.dirs.posts);
-  if(env.isDev) {
-    logger(
-      { location: path.join(env.dirs.logs, "pages", "posts.json"), overwrite: true },
-      posts
-    );
-  }
-
-  return posts;
+  return retrieve(env.paths.md, env.paths.db.posts);
 }
 
-export function learnings() {
-  return retrieve(env.dirs.learning);
+/**
+ * Returns markdown pages stored in online-resources.db
+ * @remarks
+ * When building locally in developer mode. Non publish pages
+ * will be visible. Local markdown files in `/public` will be rendered.
+ *
+ * `npm run dev`
+ * @returns
+ * Collection of MarkdownFile found with online_resources
+ */
+export function online_resources() {
+  return retrieve(env.paths.online_resources);
+}
+
+/**
+ * Returns markdown pages stored in projects.db
+ * @remarks
+ * When building locally in developer mode. Non publish pages
+ * will be visible. Local markdown files in `/public` will be rendered.
+ *
+ * `npm run dev`
+ * @returns
+ * Collection of MarkdownFile found with projects
+ */
+export function projects() {
+  return retrieve(env.paths.projects);
+}
+
+/**
+ * Returns markdown pages stored in wikis.db
+ * @remarks
+ * When building locally in developer mode. Non publish pages
+ * will be visible. Local markdown files in `/public` will be rendered.
+ *
+ * `npm run dev`
+ * @returns
+ * Collection of MarkdownFile found with wikis
+ */
+export function wikis() {
+  return retrieve(env.paths.wikis);
 }
 
 /**
@@ -25,25 +65,34 @@ export function learnings() {
  * While in production mode, only return files from archive.db
  * @param dir - Directory path
  */
-export function retrieve(dir: string) {
-  if (env.isProd) {
-    return read(dir);
+export function retrieve(dir: string, location: string) {
+  if (env.isEnvProd) {
+    return read(dir, location);
   }
 
   // Merging local md files with database files
   // when in 'development' or 'test' environment.
   const isMatch = function (x: MarkdownFile, y: MarkdownFile) {
-    icp(`[${x.dir}, ${y.dir}] ${x.dir == y.dir} && [${x.name}, ${y.name}] ${x.name == y.name} == ${x.dir == y.dir && x.name == y.name}`)
+    icp(
+      `[${x.dir}, ${y.dir}] ${x.dir == y.dir} && [${x.name}, ${y.name}] ${
+        x.name == y.name
+      } == ${x.dir == y.dir && x.name == y.name}`
+    );
     return x.dir == y.dir && x.name == y.name;
   };
 
   const contains = function (x: MarkdownFile, arr: MarkdownFile[]) {
-    return arr.find(y => isMatch(x, y));
+    return arr.find((y) => isMatch(x, y));
   };
 
   // Overwrite any archive files with local content.
   let _local = local(dir);
-  return [..._local, ...read(dir).filter((file) => {contains(file, _local)})];
+  return [
+    ..._local,
+    ...read(dir).filter((file) => {
+      contains(file, _local);
+    }),
+  ];
 }
 
 export interface MarkdownFile {
@@ -72,6 +121,10 @@ export interface MarkdownFile {
      * Defaults to a new date, if missing from front-matter header.
      */
     modified: Date;
+    /**
+     * Flag for draft mode, defaults to 'true'
+     */
+    draft: boolean | true;
   };
   /**
    * Un-compresses the markdown document with zlib.
@@ -80,7 +133,7 @@ export interface MarkdownFile {
   /**
    * H# headers found within the document.
    */
-  headers:() => {level: number, raw: string, label: string, link: string}[];
+  headers: () => { level: number; raw: string; label: string; link: string }[];
 }
 
 /**
@@ -118,6 +171,7 @@ function make(
       title: meta["title"],
       desc: meta["desc"] ? meta["desc"] : meta["description"],
       tags: meta["tags"],
+      draft: meta["draft"] ? meta["draft"] == "true" : true,
       publish: meta["publish"] ? new Date(meta["publish"]) : undefined,
       modified: meta["modified"] ? new Date(meta["modified"]) : new Date(),
     },
@@ -126,11 +180,34 @@ function make(
         .inflateSync(Buffer.from(file.content, "base64"))
         .toString();
     },
-    headers: function(){
-      const foo = [{level: 1, raw: 'string', label: "string", link: "string"}];
-      return foo;
-    }
+    headers: function () {
+      // Fetching header lines
+      const lines = content.split("\n").filter((line) => {
+        return line.trim().charAt(0) == "#";
+      });
+
+      // building headers
+      return lines.map((line) => {
+        let i; // why
+        for (
+          i = 0;
+          i < 6 && `${line.slice(0, i)}#` == line.slice(0, i + 1);
+          i++
+        ) {}
+
+        return {
+          level: i,
+          raw: line,
+          label: line.slice(i + 1),
+          link: line
+            .slice(i + 1)
+            .toLowerCase()
+            .replaceAll(" ", "-"),
+        };
+      });
+    },
   };
+
   return file;
 }
 
@@ -155,9 +232,9 @@ function parse(p: string) {
   }
 
   const { data: headers, content } = matter(fs.readFileSync(p));
-  // JSON.parse here is redundant. 
+  // JSON.parse here is redundant.
   // Forcing data type to match with a MarkdownFile
-  // retrieved from the database. 
+  // retrieved from the database.
   return make(
     path.dirname(p),
     path.basename(p),
@@ -219,23 +296,23 @@ export function walk(dir: string, files: MarkdownFile[] = []) {
 export function fetch(
   dir: string,
   name: string,
-  table: string = env.archive.table,
-  location: string = env.archive.location
+  location: string,
+  table: string = env.db_table,
 ) {
+  // Checking the db for given file name.
   const Database = require("better-sqlite3");
   const db = new Database(location, { verbose: console.log });
-
   const row = db
-    .prepare(`SELECT * FROM ${table} WHERE dir = '${dir}' AND name = '${name}'`)
+    .prepare(`SELECT * FROM ${table} WHERE name = '${name}'`)
     .get();
 
   if (row) {
-    print(`Found ${dir}/${name} in archive db.`);
+    print(`Found ${name} in db.`);
     return make(row.dir, row.name, row.content, JSON.parse(row.meta));
-  } else if (fs.existsSync(path.join(dir, name))) {
-    print(`Found ${dir}/${name} in local markdown directory.`);
+  } else if (fs.existsSync(path.join(row.dir, name))) {
+    print(`Found ${name} in local markdown directory.`);
     const { data: meta, content } = matter(
-      fs.readFileSync(path.join(dir, name), "utf-8")
+      fs.readFileSync(path.join(row.dir, name), "utf-8")
     );
 
     return make(
@@ -259,8 +336,8 @@ export function fetch(
  */
 export function read(
   dir: string,
-  table: string = env.archive.table,
-  location: string = env.archive.location
+  location: string,
+  table: string = env.db_table,
 ) {
   const Database = require("better-sqlite3");
   const db = new Database(location, { verbose: console.log });
@@ -284,8 +361,8 @@ export function read(
  */
 export function archive(
   files: MarkdownFile[],
-  table: string = env.archive.table,
-  location: string = env.archive.location
+  location: string,
+  table: string = env.db_table,
 ) {
   // todos:
   //  - add backup feature?
@@ -326,13 +403,6 @@ export function archive(
       };
     })
   );
-}
-
-export function restore(
-  table: string = env.archive.table,
-  location: string = env.archive.location
-) {
-  // todo - build md files from archive db.
 }
 
 /**
@@ -397,13 +467,13 @@ export function logger(
     (f) =>
       JSON.stringify({
         path: path.join(f.dir, f.name),
-        publish: f.details.publish?.toISOString() || '',
-        modified: f.details.modified.toISOString() ,
+        publish: f.details.publish?.toISOString() || "",
+        modified: f.details.modified.toISOString(),
         title: f.details.title,
-        tags: f.details.tags
-      }) + ',' // Adding a tailing ',' for future entries.
+        tags: f.details.tags,
+      }) + "," // Adding a tailing ',' for future entries.
   );
   // Removing the tailing ',' on the last entry.
-  lines[lines.length -1] = lines[lines.length -1].slice(0, -1)
-  return log(args, ['[', ...lines, ']']);
+  lines[lines.length - 1] = lines[lines.length - 1].slice(0, -1);
+  return log(args, ["[", ...lines, "]"]);
 }
