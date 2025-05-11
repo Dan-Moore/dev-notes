@@ -3,32 +3,16 @@ This website was built using [Next.js](https://nextjs.org/docs) and design with 
 
 Markdown files are compressed and stored within a SQLite database before rendering with [MDX](https://nextjs.org/docs/app/guides/mdx) to build web components.
 
+### [Wiki](https://github.com/Dan-Moore/dev-notes/wiki)
+The Development guides on work with `dev-notes`  
 
-![react](/public/images/react-native.svg) ![markdown](/public/images/markdown.svg) ![sqlite](/public/images/sqlite.svg)
+### [Project Board](https://github.com/users/Dan-Moore/projects/2/views/2)
+I've setup a project page to keep track of content updates and development tasks.
 
-## NPM Cheat Sheet
-Following are some basic npm commands and their usage.
-- `npm install` - Downloads and install npm packages.  Review [package.json](/package.json)
-- `npm update` - Updates npm packages
-- `npm run dev` - Runs a local instance at [http://localhost:3333](http://localhost:3333) or next available port #
-- `npm run build` - Runs the build script. Will archive markdown pages ready for publication.
 
-## Markdown
-Most pages will be written in markdown. A [root](/public/markdown/) directory houses folders used by [App Router](https://nextjs.org/docs/app/building-your-application/routing).
+---
 
-To render a markdown page, [MDXRemote](https://nextjs.org/docs/app/guides/mdx#remote-mdx) is used to load in the page content.
-```tsx
-<div className="flex-1 p-6">
-  <MDXRemote source={file.content} components={components} />
-</div>
-```
-Files can also be directly imported as components.
-```tsx
-import WebPage from "./nixos.mdx"
-export default function Page() {
-  return (<><WebPage /></>)
-}
-```
+> todo: put the following somehwere in the wiki
 
 ### Schema
 `MarkdownFile` is an object I'm using to store parsed data from a Markdown file with `/public/markdown`
