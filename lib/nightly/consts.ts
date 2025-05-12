@@ -1,10 +1,21 @@
 import { join } from "./utils";
 
-export type AppRoutes = "posts" | "online-resources" | "projects" | "wikis";
-export interface ResourcePaths {
-  md: string;
-  db: string;
-  log: string;
+export interface DevNote {
+  title: string
+  description: string
+  markdown: {
+    file: MarkdownFile
+    headers: MarkdownHeader[]
+    content: string
+  }
+  /** FrontMatter header in markdown document. */
+  tags: string[]
+  /** Flag if file is viewable on prod. Default is false. */
+  draft: boolean
+  /** Publication date - can be undefined. */
+  publish?: Date
+  modified: Date
+  getSlug(): string
 }
 
 export interface MarkdownFile {
@@ -13,7 +24,9 @@ export interface MarkdownFile {
   /**
    * Compressed markdown document with zlib.
    * @remarks
+   * ```
    * const content = require("zlib").deflateSync(raw_text).toString("base64")
+   * ```
    */
   readonly content: string;
   /**
@@ -22,17 +35,7 @@ export interface MarkdownFile {
   readonly meta: { [key: string]: any } | {};
 }
 
-export interface FileDetails {
-  title: string
-  description: string
-  /** FrontMatter header in markdown document. */
-  tags: string[]
-  /** Flag if file is viewable on prod. Default is false. */
-  draft: boolean
-  /** Publication date - can be undefined. */
-  publish?: Date
-  modified: Date
-}
+
 
 export interface MarkdownHeader {
   raw: string
@@ -85,6 +88,13 @@ export const AppResources: Record<AppRoutes, ResourcePaths> = {
     log: join(roots.log, routes.wiki),
   },
 };
+
+export type AppRoutes = "posts" | "online-resources" | "projects" | "wikis";
+export interface ResourcePaths {
+  md: string;
+  db: string;
+  log: string;
+}
 
 /**
  * Application's .env variables

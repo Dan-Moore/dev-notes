@@ -26,7 +26,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
   return (
     <main className="max-w-4xl mx-auto py-10 px-4">
     <div className="grid gap-6">
-      <MDXRemote source={file.raw()} components={components} />
+      <MDXRemote source={file.content} components={components} />
     </div>
     <SiteFooter />
     </main>

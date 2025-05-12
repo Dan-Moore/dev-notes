@@ -1,10 +1,10 @@
 import fs from "fs";
 import matter from "gray-matter";
 import { env, MarkdownFile, ResourcePaths } from "./consts";
-import { contains, dbConnection, join, make, select } from "./utils";
+import { contains, dbConnection, join, makeFile, select } from "./utils";
 
 /** Returns a markdown file. While on development mode, local files are loaded in. */
-export async function find(rp: ResourcePaths, slug: string) {
+export async function find(rp: ResourcePaths, slug: string): Promise<MarkdownFile> {
   // if on dev - return local before attempting to query db.
   const local_path = join(rp.md, slug + ".mdx");
   if(env.isEnvDev && fs.existsSync(local_path)) {
@@ -14,7 +14,7 @@ export async function find(rp: ResourcePaths, slug: string) {
   const conn = dbConnection(rp.db);
   const row = select(conn);
   conn.close();
-  return make(row.dir, row.name, row.content, row.meta);
+  return makeFile(row.dir, row.name, row.content, row.meta);
 }
 
 /** Returns collection of markdown documents.  */
@@ -24,7 +24,7 @@ export async function all(rp: ResourcePaths): Promise<MarkdownFile[]> {
   conn.close();
 
   const db_files = rows.map((row) =>
-    make(row.dir, row.name, row.content, row.meta)
+    makeFile(row.dir, row.name, row.content, row.meta)
   );
   
   // While on prod - return only files in DB.
@@ -82,7 +82,7 @@ function parse(path: string): MarkdownFile {
 
   const { data: headers, content } = matter(fs.readFileSync(path));
 
-  return make(
+  return makeFile(
     require('path').dirname(path),
     require('path').basename(path),
     content,

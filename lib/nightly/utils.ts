@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { icp } from "./io";
-import { env, FileDetails, MarkdownFile, MarkdownHeader } from "./consts";
+import { DevNote, env, MarkdownFile, MarkdownHeader } from "./consts";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -76,44 +76,32 @@ export function insert(
   );
 }
 
-export function raw(compress: string): string {
-  return require("zlib")
-    .inflateSync(Buffer.from(compress, "base64"))
-    .toString();
-}
-
-
-
-export function headers(raw: string): MarkdownHeader[] {
+export function fetchHeaders(raw: string): MarkdownHeader[] {
   const raw_headers = raw.split("\n").filter((line) => {
     return line.trim().charAt(0) == "#";
   });
-  
-  const headers = raw_headers.map(_raw => {
+
+  const headers = raw_headers.map((_raw) => {
     let i; // why
-    for (
-      i = 0;
-      i < 6 && `${_raw.slice(0, i)}#` == _raw.slice(0, i + 1);
-      i++
-    ) {
+    for (i = 0; i < 6 && `${_raw.slice(0, i)}#` == _raw.slice(0, i + 1); i++) {
       /* loop just increments counter & peek at next line character */
     }
 
-    const label = _raw.slice(i + 1)
+    const label = _raw.slice(i + 1);
 
     const header: MarkdownHeader = {
       raw: _raw,
       level: i,
       label: label,
-      link: label.toLowerCase().replaceAll(" ", "-")
-    }
+      link: label.toLowerCase().replaceAll(" ", "-"),
+    };
     return header;
-  })
+  });
 
   return headers;
 }
 
-export function make(
+export function makeFile(
   slug: string,
   name: string,
   content: string,
@@ -128,10 +116,32 @@ export function make(
       : content,
     meta: meta,
   };
+
   return file;
 }
 
+export function makeNote(file: MarkdownFile): DevNote {
+  // uncompressing file contents
+  const content = require("zlib")
+    .inflateSync(Buffer.from(file.content, "base64"))
+    .toString();
 
+  const meta = file.meta // pulling this out to shorten . train
+
+  return {
+    title: meta['title'],
+    description: meta['desc'] ? meta['desc'] : meta['description'],
+    markdown: {
+      file: file,
+      headers: fetchHeaders(content),
+      content: content,
+    },
+    tags: meta['tags'] ? meta['tags'] : [],
+    draft: meta['draft'] ? meta['draft'] == 'false' : true,
+    modified: meta['modified']? meta['modified'] : new Date(),
+    getSlug() {return this.markdown.file.slug},
+  };
+}
 
 /**
  * Writes to the log file.
