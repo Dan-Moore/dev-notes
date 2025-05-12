@@ -3,11 +3,13 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { posts } from "@/lib/io";
+import { all } from "@/lib/nightly/io";
+import { AppResources } from "@/lib/nightly/consts";
 import Link from "next/link";
 
-export default function Page() {
-
+export default async function Page() {
+  const files = await all(AppResources.posts);
+  
   return (
     <SidebarProvider defaultOpen={false} 
     style={
@@ -21,13 +23,13 @@ export default function Page() {
     <SidebarInset>
       <SiteHeader />
       <div className="grid gap-6 py-6 px-10">
-        {posts().map((post) => (
-          <article key={post.link} className="border rounded-lg p-6 hover:shadow-md transition">
-            <Link href={post.link} className="block space-y-3">
-              <h2 className="text-2xl font-bold">{post?.details?.title}</h2>
-              {post?.details?.desc && <p className="text-muted-foreground">{post?.details?.desc}</p>}
+        {files.map((file) => (
+          <article key={file.details().title} className="border rounded-lg p-6 hover:shadow-md transition">
+            <Link href={file.slug} className="block space-y-3">
+              <h2 className="text-2xl font-bold">{file.details().title}</h2>
+              {file.details().description && <p className="text-muted-foreground">{file.details().description}</p>}
               <div className="flex gap-2 pt-2">
-                {(post.details.tags) ? post.details.tags.map((tag: string) => (
+                {(file.details().tags) ? file.details().tags.map((tag: string) => (
                   <span key={tag} className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-md">
                     {tag}
                   </span>
