@@ -1,17 +1,17 @@
-import fs from "fs";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { components } from "@/components/mdx";
-import { env } from "@/lib/consts";
-import { fetch, posts } from "@/lib/io";
+import { AppResources} from "@/lib/consts";
+import { find, all } from "@/lib/io";
 import { SiteFooter } from "@/components/site-footer";
+import fs from 'fs';
 
 async function getPost({ slug }: { slug: string }) {  
-  const post = fetch(env.paths.db.posts, env.paths.md.posts, `${slug}.mdx`)
+  const post = find(AppResources.posts, slug)
   return post;
 }
 
 export async function generateStaticParams() {
-  const params = posts().map((file) => ({
+  const params = all(AppResources.posts).map((file) => ({
     slug: file.name.replace(".mdx", ""),
   }));
 
