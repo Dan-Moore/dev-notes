@@ -76,6 +76,43 @@ export function insert(
   );
 }
 
+export function raw(compress: string): string {
+  return require("zlib")
+    .inflateSync(Buffer.from(compress, "base64"))
+    .toString();
+}
+
+
+
+export function headers(raw: string): MarkdownHeader[] {
+  const raw_headers = raw.split("\n").filter((line) => {
+    return line.trim().charAt(0) == "#";
+  });
+  
+  const headers = raw_headers.map(_raw => {
+    let i; // why
+    for (
+      i = 0;
+      i < 6 && `${_raw.slice(0, i)}#` == _raw.slice(0, i + 1);
+      i++
+    ) {
+      /* loop just increments counter & peek at next line character */
+    }
+
+    const label = _raw.slice(i + 1)
+
+    const header: MarkdownHeader = {
+      raw: _raw,
+      level: i,
+      label: label,
+      link: label.toLowerCase().replaceAll(" ", "-")
+    }
+    return header;
+  })
+
+  return headers;
+}
+
 export function make(
   slug: string,
   name: string,
@@ -90,56 +127,10 @@ export function make(
       ? require("zlib").deflateSync(content).toString("base64")
       : content,
     meta: meta,
-    raw: function (): string {
-      return require("zlib")
-        .inflateSync(Buffer.from(file.content, "base64"))
-        .toString();
-    },
-    details: function (): FileDetails {
-      return {
-        // Storing either 'desc' or 'description'
-        description: meta["desc"] ? meta["desc"] : meta["description"],
-        title: meta["title"],
-        tags: meta["tags"] ? meta["tags"] : [],
-        draft: meta["draft"] ? meta["draft"] == "false" : true,
-        publish: meta["publish"] ? new Date(meta["publish"]) : undefined,
-        modified: meta["modified"] ? new Date(meta["modified"]) : new Date(),
-      };
-    },
-    headers: function (): MarkdownHeader[] {
-      const headers = content.split("\n").filter((line) => {
-        return line.trim().charAt(0) == "#";
-      });
-      return headers.map((h_) => {
-        const header: MarkdownHeader = {
-          raw: h_,
-          level: function (): number {
-            let i; // why
-            for (
-              i = 0;
-              i < 6 && `${h_.slice(0, i)}#` == h_.slice(0, i + 1);
-              i++
-            ) {
-              /* loop just increments counter & peek at next line character */
-            }
-            return i;
-          },
-          link: function (): string {
-            return this.raw
-              .slice(this.level() + 1)
-              .toLowerCase()
-              .replaceAll(" ", "-");
-          },
-          label: function (): string {
-            return this.raw.slice(this.level() + 1);
-          },
-        };
-        return header;
-      });
-    },
   };
   return file;
 }
+
 
 
 /**

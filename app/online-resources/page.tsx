@@ -6,27 +6,25 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 
-import { resources } from "@/lib/io"
-import fs from "fs";
-import { dirs } from "@/lib/consts";
+import { AppResources } from "@/lib/nightly/consts"
+import { all } from "@/lib/nightly/io"
 
 
-// generateStaticParams generates static paths for blog posts.
-// This function is called at build time.
-// It returns an array of possible values for slug.
-// For example, [{ params: { slug: "my-first-post" } }, { params: { slug: "my-second-post" } }]
 export async function generateStaticParams() {
-  const files = fs.readdirSync(dirs.posts);
-  const params = files.map((filename) => ({
-    slug: filename.replace(".mdx", ""),
+  const files = await all(AppResources.posts);
+  
+  // building slugs for params
+  const params = files.map((file) => ({
+    // removing file path to make slug
+    slug: file.name.replace(".mdx", ""),
   }));
 
   return params;
 }
 
-export default function Page(props0: { params: Promise<{ slug: string }> }) {
-  const data = JSON.stringify(resources())
-  //console.log(dirs)
+export default async function Page(props: { params: Promise<{ slug: string }> }) {
+  const files = await all(AppResources["online-resources"])
+  
   return (
     <SidebarProvider defaultOpen={false} 
       style={
@@ -42,7 +40,7 @@ export default function Page(props0: { params: Promise<{ slug: string }> }) {
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <DataTable data={data}/>
+              <DataTable files={files}/>
             </div>
           </div>
         </div>

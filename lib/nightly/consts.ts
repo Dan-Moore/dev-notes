@@ -20,9 +20,6 @@ export interface MarkdownFile {
    * Dictionary of front-matter headers.
    */
   readonly meta: { [key: string]: any } | {};
-  raw(): string;
-  details(): FileDetails;
-  headers(): MarkdownHeader[];
 }
 
 export interface FileDetails {
@@ -39,9 +36,9 @@ export interface FileDetails {
 
 export interface MarkdownHeader {
   raw: string
-  level(): number
-  link(): string
-  label(): string
+  level: number
+  link: string
+  label: string
 }
 
 /**

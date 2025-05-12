@@ -44,6 +44,7 @@ export async function all(rp: ResourcePaths): Promise<MarkdownFile[]> {
 }
 
 export async function walk(dir: string, files: MarkdownFile[] = []) {
+
   if (!dir || !fs.existsSync(dir)) {
     throw new Error(`unable to walk(${dir}, ${files})!  Invalid directory!`);
   }
@@ -69,7 +70,7 @@ export async function walk(dir: string, files: MarkdownFile[] = []) {
  * ```
  * @param p - path variable: 'public/markdown/hi.mdx'
  */
-function parse(path: string) {
+function parse(path: string): MarkdownFile {
   const isReal = fs.existsSync(path);
   if (isReal && fs.statSync(path).isDirectory()) {
     throw new Error(`unable to parse(${path}).  Given path was a directory!`);
@@ -85,7 +86,7 @@ function parse(path: string) {
     require('path').dirname(path),
     require('path').basename(path),
     content,
-    JSON.parse(JSON.stringify(headers)),
+    JSON.parse(JSON.stringify(headers)), // forcing datatypes on local files to match db records.
     true
   );
 }
