@@ -7,18 +7,11 @@ import { Tooltip, TooltipProvider } from "@workspace/ui/components/tooltip"
 import Link from "next/link"
 import { Github, Linkedin, Rss } from "lucide-react"
 import { IconDotsVertical } from "@tabler/icons-react"
+import { dev } from "@/lib/consts"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+export function NavDev() {
   const { isMobile } = useSidebar()
-
+  
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -29,13 +22,13 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarImage src={dev.avatar} alt={dev.name} />
                 <AvatarFallback className="rounded-lg"></AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{dev.name}</span>
                 <span className="text-muted-foreground truncate text-xs">
-                  {user.email}
+                  {dev.email}
                 </span>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
@@ -51,9 +44,9 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-8 py-1.5 text-left text-sm">
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">{dev.name}</span>
                   <span className="text-muted-foreground truncate text-xs">
-                    {user.email}
+                    {dev.email}
                   </span>
                 </div>
               </div>
@@ -62,20 +55,20 @@ export function NavUser({
             
             <DropdownMenuGroup>
             <Tooltip>
-              <Link href={process.env.NEXT_PUBLIC_PROFILE_GITHUB || '/'}>
+              <Link href={dev.github}>
               <DropdownMenuItem>
                 <Github />
                 Github
               </DropdownMenuItem>
               </Link>
               </Tooltip>
-              <Link href={process.env.NEXT_PUBLIC_PROFILE_GITHUB || '/'}>
+              <Link href={dev.linkedin}>
               <DropdownMenuItem>
                 <Linkedin />
                 LinkedIn
               </DropdownMenuItem>
               </Link>
-              <Link href={process.env.NEXT_PUBLIC_PROFILE_GITHUB || '/'}>
+              <Link href={dev.rss}>
               <DropdownMenuItem>
                 <Rss />
                 Notifications

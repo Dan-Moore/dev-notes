@@ -1,19 +1,11 @@
 export function isEmpty<T>(arr: T[]): boolean {
-    return (!arr || arr.length === 0);
+    return (!arr || arr.length == 0);
 }
 
-export function getKeys(record: Record<any, any>) {
-    if(!record) {
-        return []
-    }
-    const keys = Object.keys(record)
-    return (keys) ? keys : []
+export function recordKeys(record: Record<any, any>) {
+    return (record) ? Object.keys(record) : []
 }
 
-export function getValues(record: Record<any, any>) {
-    if(!record) {
-        return []
-    }
-    const values = Object.values(record)
-    return (values) ? values : []
+export function recordValues(record: Record<any, any>) {
+    return (record) ? Object.values(record) : []
 }

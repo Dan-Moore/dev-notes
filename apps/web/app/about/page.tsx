@@ -1,4 +1,4 @@
-import { DefaultHeader } from "@/components/headers";
+import { DefaultHeader } from "@/components/nav-header";
 import {
   SidebarInset,
   SidebarProvider,
