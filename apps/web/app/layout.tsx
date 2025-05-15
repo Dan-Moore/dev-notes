@@ -1,30 +1,37 @@
-import { Geist, Geist_Mono } from "next/font/google"
+import "@workspace/ui/globals.css";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 
-import "@workspace/ui/globals.css"
-import { Providers } from "@/components/providers"
-
-const fontSans = Geist({
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  variable: "--font-sans",
-})
+});
 
-const fontMono = Geist_Mono({
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
-  variable: "--font-mono",
-})
+});
+
+export const metadata: Metadata = {
+  title: "Dev Notes",
+  description: "todo",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased `}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <div className={`dark`} data-theme={`dark`}>{children}</div>        
+        </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
