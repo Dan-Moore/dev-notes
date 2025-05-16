@@ -1,4 +1,4 @@
-import { iNavLink, iNavIcon } from "./consts.js";
+import { iNavLink } from "./consts.js";
 
 
 /**

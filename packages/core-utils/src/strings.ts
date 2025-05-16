@@ -18,3 +18,12 @@ export function peek(str: string, ...pos: number[]):string[] {
         }
     })
 }
+
+/** Removes extension from file names.*/
+export function removeDotExt(name: string, ext: string) {
+    if(!name || !ext) {
+        return undefined
+    }
+    
+    return (ext.startsWith('.')) ? name.replace(ext, '') : name.replace('.'+ext, '')
+}
