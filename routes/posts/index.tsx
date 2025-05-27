@@ -1,7 +1,5 @@
-import { useSignal } from "@preact/signals";
 
 export default function Home() {
-  const count = useSignal(3);
   return (
     <div class="px-4 py-8 mx-auto bg-[#86efac]">
       <div class="max-w-screen-md mx-auto flex flex-col items-center justify-center">
@@ -15,8 +13,9 @@ export default function Home() {
         <h1 class="text-4xl font-bold">Welcome to Fresh</h1>
         <p class="my-4">
           Try updating this message in the
-          <code class="mx-2">./routes/index.tsx</code> file, and refresh.
+          <code class="mx-2">./routes/posts/index.tsx</code> file, and refresh.
         </p>
+        <a href="/posts/hello-world">hello world</a>
       </div>
     </div>
   );
