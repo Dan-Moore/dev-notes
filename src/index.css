@@ -6,7 +6,7 @@
   }
 
   body {
-    /*@apply grid place-items-center min-w-[320px] min-h-screen relative m-0 bg-background text-foreground; */
+    @apply grid place-items-center min-w-[320px] min-h-screen relative m-0 bg-background text-foreground;
   }
 }
 
@@ -23,27 +23,6 @@ body::before {
   animation: slide 30s linear infinite;
   pointer-events: none;
 }
-
-/**
-  [data-slot="card"]::after, ::before {
-    content: '';
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    background-image: conic-gradient(red, green, blue, yellow);
-    top: 50%;
-    left: 50%;
-    translate: -50%, -50%;
-    z-index: -1;
-    padding: 3px;
-    border-radius: 10px;
-  }
-
-   [data-slot="card"]::before {
-    filter: blur(1.5rem);
-    opacity: 0.5;
-  }
-*/ 
 
 @keyframes slide {
   from {
@@ -70,4 +49,3 @@ body::before {
     animation: none !important;
   }
 }
-
